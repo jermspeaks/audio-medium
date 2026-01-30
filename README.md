@@ -1,6 +1,6 @@
-# Pocket Casts History Extractor
+# Podcasts Reviewer
 
-Extract your Pocket Casts listening history from iOS into a normalized SQLite database, with optional JSON export and analytics.
+Import your Pocket Casts listening history from iOS into a SQLite database, run analytics from the command line, and browse everything in a **web app** (FastAPI + React).
 
 ## How to Export Pocket Casts Database from iOS
 
@@ -89,23 +89,20 @@ Or with an already-extracted database:
 python3 extract_pocketcasts.py dummy.zip --db-path path/to/database.sqlite3 --json history.json --sqlite podcasts.db
 ```
 
-## Web App (Fullstack)
+## Web App
 
-A FastAPI backend and React frontend let you browse listening history in the browser.
+A **FastAPI** backend and **React** (Vite + Tailwind) frontend let you view listening history, stats, and play sessions in the browser.
 
-### Backend (API)
+**1. Run the API** (from project root):
 
 ```bash
-# Install Python dependencies
 pip install -r requirements.txt
-
-# Run the API (from project root)
 uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The API serves at `http://127.0.0.1:8000`. OpenAPI docs: `http://127.0.0.1:8000/docs`.
+- API: `http://127.0.0.1:8000` · Docs: `http://127.0.0.1:8000/docs`
 
-### Frontend
+**2. Run the frontend:**
 
 ```bash
 cd frontend
@@ -113,22 +110,32 @@ npm install
 npm run dev
 ```
 
-The app runs at `http://localhost:5173` and proxies `/api` to the backend. Use the same host/port in `api/main.py` CORS `allow_origins` if you use a different dev URL.
+- App: `http://localhost:5173` (proxies `/api` to the backend)
 
-### Routes
+**App routes:**
 
-- **Dashboard** (`/`) – Total hours, episodes, completion stats, top podcasts chart
-- **Podcasts** (`/podcasts`) – List with search; click for detail and episodes
-- **Episodes** (`/episodes`) – List with status filter; click for detail, history, and play sessions
-- **Search** (`/search?q=...`) – Search podcasts and episodes
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard – total hours, episodes, completion stats, top podcasts chart |
+| `/podcasts` | Podcast list with search; click for detail and episodes |
+| `/episodes` | Episode list with status filter; click for detail, history, play sessions |
+| `/search?q=...` | Search podcasts and episodes |
+
+## Project layout
+
+- `api/` – FastAPI app and routers (podcasts, episodes, stats, search)
+- `frontend/` – React app (Vite, React Router, Tailwind, Recharts)
+- `database.py` – SQLite schema and query helpers
+- `listening_stats.py` – Analytics used by CLI and API
+- `import_pocketcasts.py` – Import from Pocket Casts export
+- `config.py` – DB path (`PODCASTS_DB_PATH`)
 
 ## Requirements
 
-- Python 3.10+ for the API (3.7+ for import/analytics scripts)
-- Node.js 18+ for the frontend
-- See `requirements.txt` (API) and `frontend/package.json` (frontend)
+- **Python 3.10+** for the API; **3.7+** for import/analytics scripts. See `requirements.txt`.
+- **Node.js 18+** for the frontend. See `frontend/package.json`.
 
 ## Notes
 
-- The Pocket Casts export is intended for troubleshooting but contains your listening history.
-- You can also request a GDPR data export from Pocket Casts support for a more structured dump.
+- The Pocket Casts export is for troubleshooting and contains your listening history.
+- You can request a GDPR data export from Pocket Casts support for a more structured dump.
