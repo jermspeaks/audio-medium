@@ -13,7 +13,7 @@ def list_episodes(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     podcast_uuid: Optional[str] = Query(None),
-    playing_status: Optional[int] = Query(None, description="1=not played, 2=completed, 3=in progress"),
+    playing_status: Optional[str] = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
 ):
     """List episodes with optional filters."""
     rows = get_episodes_list(

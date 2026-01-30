@@ -6,7 +6,7 @@ Creates and manages podcasts, episodes, listening_history, and play_sessions tab
 import sqlite3
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from contextlib import contextmanager
 
 # Schema version for migrations
@@ -327,9 +327,9 @@ def get_episodes_by_podcast(
     db_path: Optional[Path] = None,
     limit: int = 100,
     offset: int = 0,
-    playing_status: Optional[int] = None,
+    playing_status: Optional[Union[int, str]] = None,
 ) -> List[Dict[str, Any]]:
-    """List episodes for a podcast, optionally filtered by playing_status (1=not played, 2=completed, 3=in progress)."""
+    """List episodes for a podcast, optionally filtered by playing_status (1=not played, 2=in progress, 3=completed, 'played'=2 or 3)."""
     with get_connection(db_path) as conn:
         sql = """
             SELECT e.*, lh.played_up_to, lh.playing_status, lh.completion_percentage,
@@ -340,8 +340,11 @@ def get_episodes_by_podcast(
         """
         params: list = [podcast_uuid]
         if playing_status is not None:
-            sql += " AND lh.playing_status = ?"
-            params.append(playing_status)
+            if playing_status == "played":
+                sql += " AND lh.playing_status IN (2, 3)"
+            else:
+                sql += " AND lh.playing_status = ?"
+                params.append(playing_status)
         sql += " ORDER BY lh.last_played_at DESC NULLS LAST, e.published_date DESC NULLS LAST LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         cur = conn.execute(sql, params)
@@ -424,11 +427,11 @@ def search_episodes(
     q: str,
     db_path: Optional[Path] = None,
     podcast_uuid: Optional[str] = None,
-    playing_status: Optional[int] = None,
+    playing_status: Optional[Union[int, str]] = None,
     limit: int = 50,
     offset: int = 0,
 ) -> List[Dict[str, Any]]:
-    """Search episodes by title, optionally filtered by podcast and playing_status."""
+    """Search episodes by title, optionally filtered by podcast and playing_status (1=not played, 2=in progress, 3=completed, 'played'=2 or 3)."""
     with get_connection(db_path) as conn:
         term = f"%{q}%"
         sql = """
@@ -444,8 +447,11 @@ def search_episodes(
             sql += " AND e.podcast_uuid = ?"
             params.append(podcast_uuid)
         if playing_status is not None:
-            sql += " AND lh.playing_status = ?"
-            params.append(playing_status)
+            if playing_status == "played":
+                sql += " AND lh.playing_status IN (2, 3)"
+            else:
+                sql += " AND lh.playing_status = ?"
+                params.append(playing_status)
         sql += " ORDER BY lh.last_played_at DESC NULLS LAST LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         cur = conn.execute(sql, params)
@@ -457,9 +463,9 @@ def get_episodes_list(
     limit: int = 100,
     offset: int = 0,
     podcast_uuid: Optional[str] = None,
-    playing_status: Optional[int] = None,
+    playing_status: Optional[Union[int, str]] = None,
 ) -> List[Dict[str, Any]]:
-    """List episodes with optional filters for API list endpoint."""
+    """List episodes with optional filters for API list endpoint. playing_status: 1=not played, 2=in progress, 3=completed, 'played'=2 or 3."""
     with get_connection(db_path) as conn:
         sql = """
             SELECT e.*, p.title AS podcast_title, p.author AS podcast_author,
@@ -475,8 +481,11 @@ def get_episodes_list(
             sql += " AND e.podcast_uuid = ?"
             params.append(podcast_uuid)
         if playing_status is not None:
-            sql += " AND lh.playing_status = ?"
-            params.append(playing_status)
+            if playing_status == "played":
+                sql += " AND lh.playing_status IN (2, 3)"
+            else:
+                sql += " AND lh.playing_status = ?"
+                params.append(playing_status)
         sql += " ORDER BY lh.last_played_at DESC NULLS LAST LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         cur = conn.execute(sql, params)

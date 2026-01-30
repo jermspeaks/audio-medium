@@ -21,7 +21,7 @@ export default function EpisodesPage() {
       setLoading(true);
       try {
         const params = { limit: LIMIT, offset: page * LIMIT };
-        if (playingStatus) params.playing_status = parseInt(playingStatus, 10);
+        if (playingStatus) params.playing_status = playingStatus;
         const data = await getEpisodes(params);
         if (!cancelled) setEpisodes(data);
       } catch (e) {

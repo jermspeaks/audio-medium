@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const STATUS_LABELS = { 1: 'Not played', 2: 'Completed', 3: 'In progress' };
+const STATUS_LABELS = { 1: 'Not played', 2: 'In progress', 3: 'Completed' };
 
 function formatDuration(seconds) {
   if (seconds == null || !Number.isFinite(seconds)) return '—';

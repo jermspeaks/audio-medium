@@ -36,7 +36,7 @@ export default function PodcastDetailPage() {
       setLoading(true);
       try {
         const params = {};
-        if (playingStatus) params.playing_status = parseInt(playingStatus, 10);
+        if (playingStatus) params.playing_status = playingStatus;
         const data = await getPodcastEpisodes(uuid, { limit: 200, ...params });
         if (!cancelled) setEpisodes(data);
       } catch (e) {

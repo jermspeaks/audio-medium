@@ -38,11 +38,11 @@ def completion_rate(db_path: Optional[Path] = None) -> Dict[str, Any]:
         avg = conn.execute(
             "SELECT AVG(completion_percentage) AS avg_pct FROM listening_history WHERE completion_percentage IS NOT NULL"
         ).fetchone()
-        # Pocket Casts: 1=not played, 2=completed, 3=in progress
-        completed = conn.execute(
+        # Pocket Casts: 1=not played, 2=in progress, 3=completed
+        in_progress = conn.execute(
             "SELECT COUNT(*) AS n FROM listening_history WHERE playing_status = 2"
         ).fetchone()
-        in_progress = conn.execute(
+        completed = conn.execute(
             "SELECT COUNT(*) AS n FROM listening_history WHERE playing_status = 3"
         ).fetchone()
         return {

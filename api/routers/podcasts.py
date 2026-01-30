@@ -33,7 +33,7 @@ def list_podcast_episodes(
     uuid: str,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    playing_status: Optional[int] = Query(None, description="1=not played, 2=completed, 3=in progress"),
+    playing_status: Optional[str] = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
 ):
     """Get episodes for a podcast."""
     podcast = get_podcast_by_uuid(uuid)

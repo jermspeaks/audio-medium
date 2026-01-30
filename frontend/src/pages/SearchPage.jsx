@@ -26,7 +26,7 @@ export default function SearchPage() {
       setError(null);
       try {
         const params = { q: q.trim(), limit: 30 };
-        if (playingStatus) params.playing_status = parseInt(playingStatus, 10);
+        if (playingStatus) params.playing_status = playingStatus;
         const data = await search(params);
         if (!cancelled) setResults(data);
       } catch (e) {

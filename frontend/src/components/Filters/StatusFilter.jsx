@@ -1,8 +1,9 @@
 export const PLAYING_STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
   { value: '1', label: 'Not played' },
-  { value: '2', label: 'Completed' },
-  { value: '3', label: 'In progress' },
+  { value: '2', label: 'In progress' },
+  { value: '3', label: 'Completed' },
+  { value: 'played', label: 'Played' },
 ];
 
 export default function StatusFilter({ value, onChange }) {

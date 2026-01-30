@@ -11,7 +11,7 @@ router = APIRouter()
 def search(
     q: str = Query(..., min_length=1),
     podcast_uuid: str | None = Query(None),
-    playing_status: int | None = Query(None, description="1=not played, 2=completed, 3=in progress"),
+    playing_status: str | None = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
     limit: int = Query(20, ge=1, le=100),
 ):
     """Unified search across podcasts and episodes."""
