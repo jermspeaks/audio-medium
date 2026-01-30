@@ -492,6 +492,38 @@ def get_episodes_list(
         return [dict(row) for row in cur.fetchall()]
 
 
+def get_last_sync_timestamp(
+    db_path: Optional[Path] = None,
+    conn: Optional[sqlite3.Connection] = None,
+) -> Optional[str]:
+    """Return the last sync timestamp (ISO string) from _schema_meta, or None if never synced."""
+    if conn is not None:
+        cur = conn.execute(
+            "SELECT value FROM _schema_meta WHERE key = ?",
+            ("last_sync_timestamp",),
+        )
+        row = cur.fetchone()
+        return row["value"] if row else None
+    with get_connection(db_path) as c:
+        return get_last_sync_timestamp(conn=c)
+
+
+def set_last_sync_timestamp(
+    timestamp: str,
+    db_path: Optional[Path] = None,
+    conn: Optional[sqlite3.Connection] = None,
+) -> None:
+    """Store the last sync timestamp (ISO string) in _schema_meta."""
+    if conn is not None:
+        conn.execute(
+            "INSERT OR REPLACE INTO _schema_meta (key, value) VALUES (?, ?)",
+            ("last_sync_timestamp", timestamp),
+        )
+        return
+    with get_connection(db_path) as c:
+        set_last_sync_timestamp(timestamp, conn=c)
+
+
 if __name__ == "__main__":
     init_schema()
     print("Schema initialized.")

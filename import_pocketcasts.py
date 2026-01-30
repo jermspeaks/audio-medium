@@ -21,6 +21,10 @@ from database import (
 )
 
 
+# Cocoa epoch: seconds between 2001-01-01 and 1970-01-01 (Unix)
+_COCOA_EPOCH_OFFSET = 978307200
+
+
 def _timestamp_to_iso(value: Optional[float]) -> Optional[str]:
     """Convert Pocket Casts REAL timestamp (seconds since epoch or Cocoa epoch) to ISO string."""
     if value is None:
@@ -30,11 +34,23 @@ def _timestamp_to_iso(value: Optional[float]) -> Optional[str]:
         v = float(value)
         if v > 1e10:  # milliseconds
             v = v / 1000.0
-        # Cocoa epoch is 978307200 seconds before Unix
         if v < 1e9:  # likely Cocoa (seconds since 2001)
-            v = v + 978307200
+            v = v + _COCOA_EPOCH_OFFSET
         return datetime.utcfromtimestamp(v).strftime("%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, OSError):
+        return None
+
+
+def _iso_to_cocoa_timestamp(iso_str: Optional[str]) -> Optional[float]:
+    """Convert ISO 8601 timestamp to Cocoa epoch (seconds since 2001-01-01) for Pocket Casts comparison."""
+    if not iso_str:
+        return None
+    try:
+        # Parse ISO format (e.g. 2026-01-29T12:00:00Z)
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        unix_ts = dt.timestamp()
+        return unix_ts - _COCOA_EPOCH_OFFSET
+    except (ValueError, TypeError):
         return None
 
 
