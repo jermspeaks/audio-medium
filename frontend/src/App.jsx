@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
+import SystemLayout from './components/Layout/SystemLayout';
 import DashboardPage from './pages/DashboardPage';
 import PodcastsPage from './pages/PodcastsPage';
 import PodcastDetailPage from './pages/PodcastDetailPage';
-import EpisodesPage from './pages/EpisodesPage';
+import FeedPage from './pages/FeedPage';
 import EpisodeDetailPage from './pages/EpisodeDetailPage';
 import SearchPage from './pages/SearchPage';
 import SyncPage from './pages/SyncPage';
@@ -14,14 +15,18 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<AppLayout />}>
-          <Route index element={<DashboardPage />} />
+          <Route index element={<FeedPage />} />
+          <Route path="feed" element={<FeedPage />} />
+          <Route path="feed/:uuid" element={<EpisodeDetailPage />} />
           <Route path="podcasts" element={<PodcastsPage />} />
           <Route path="podcasts/:uuid" element={<PodcastDetailPage />} />
-          <Route path="episodes" element={<EpisodesPage />} />
-          <Route path="episodes/:uuid" element={<EpisodeDetailPage />} />
           <Route path="search" element={<SearchPage />} />
-          <Route path="sync" element={<SyncPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="system" element={<SystemLayout />}>
+            <Route index element={<Navigate to="/system/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="sync" element={<SyncPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

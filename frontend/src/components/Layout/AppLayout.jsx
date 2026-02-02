@@ -6,15 +6,15 @@ export default function AppLayout() {
       <header className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
-            <Link to="/" className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+            <Link to="/feed" className="text-xl font-semibold text-slate-800 dark:text-slate-100">
               Podcasts Listening History
             </Link>
             <nav className="flex gap-6">
               <Link
-                to="/"
+                to="/feed"
                 className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
               >
-                Dashboard
+                Feed
               </Link>
               <Link
                 to="/podcasts"
@@ -23,28 +23,16 @@ export default function AppLayout() {
                 Podcasts
               </Link>
               <Link
-                to="/episodes"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
-              >
-                Episodes
-              </Link>
-              <Link
                 to="/search"
                 className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
               >
                 Search
               </Link>
               <Link
-                to="/sync"
+                to="/system"
                 className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
               >
-                Sync
-              </Link>
-              <Link
-                to="/settings"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
-              >
-                Settings
+                System
               </Link>
             </nav>
           </div>

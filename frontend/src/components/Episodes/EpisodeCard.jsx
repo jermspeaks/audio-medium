@@ -15,7 +15,7 @@ export default function EpisodeCard({ episode, showPodcast = true }) {
   const statusLabel = STATUS_LABELS[episode.playing_status] ?? '—';
   return (
     <Link
-      to={`/episodes/${episode.uuid}`}
+      to={`/feed/${episode.uuid}`}
       className="block rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hover:shadow-md transition-shadow"
     >
       <div className="flex gap-4">

@@ -8,7 +8,7 @@ import StatusFilter from '../components/Filters/StatusFilter';
 
 const LIMIT = 50;
 
-export default function EpisodesPage() {
+export default function FeedPage() {
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,7 +39,7 @@ export default function EpisodesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Episodes</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Feed</h1>
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-500 dark:text-slate-400">Status:</span>
           <StatusFilter value={playingStatus} onChange={setPlayingStatus} />
