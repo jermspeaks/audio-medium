@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any, Union
 from contextlib import contextmanager
 
 # Schema version for migrations
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 CREATE_PODCASTS = """
 CREATE TABLE IF NOT EXISTS podcasts (
@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS episodes (
     file_url TEXT,
     file_type TEXT,
     size_bytes INTEGER,
+    video_url TEXT,
     deleted_at TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
@@ -176,6 +177,16 @@ def _migrate_schema(conn: sqlite3.Connection) -> None:
         except sqlite3.OperationalError:
             pass
 
+    # Migration to v4: add video_url to episodes
+    if current < 4:
+        try:
+            cur = conn.execute("PRAGMA table_info(episodes)")
+            columns = [row[1] for row in cur.fetchall()]
+            if "video_url" not in columns:
+                conn.execute("ALTER TABLE episodes ADD COLUMN video_url TEXT")
+        except sqlite3.OperationalError:
+            pass
+
     conn.execute(
         "INSERT OR REPLACE INTO _schema_meta (key, value) VALUES (?, ?)",
         ("schema_version", str(SCHEMA_VERSION)),
@@ -307,16 +318,17 @@ def upsert_episode(
     file_url: Optional[str] = None,
     file_type: Optional[str] = None,
     size_bytes: Optional[int] = None,
+    video_url: Optional[str] = None,
     deleted_at: Optional[str] = None,
     db_path: Optional[Path] = None,
     conn: Optional[sqlite3.Connection] = None,
 ) -> None:
     """Insert or update an episode by uuid. Set deleted_at for soft delete."""
     now = _iso_now()
-    params = (uuid, podcast_uuid, title, description, duration, published_date, file_url, file_type, size_bytes, deleted_at, now, now)
+    params = (uuid, podcast_uuid, title, description, duration, published_date, file_url, file_type, size_bytes, video_url, deleted_at, now, now)
     sql = """
-        INSERT INTO episodes (uuid, podcast_uuid, title, description, duration, published_date, file_url, file_type, size_bytes, deleted_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO episodes (uuid, podcast_uuid, title, description, duration, published_date, file_url, file_type, size_bytes, video_url, deleted_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(uuid) DO UPDATE SET
             podcast_uuid = excluded.podcast_uuid,
             title = COALESCE(excluded.title, title),
@@ -326,6 +338,7 @@ def upsert_episode(
             file_url = COALESCE(excluded.file_url, file_url),
             file_type = COALESCE(excluded.file_type, file_type),
             size_bytes = COALESCE(excluded.size_bytes, size_bytes),
+            video_url = COALESCE(excluded.video_url, video_url),
             deleted_at = excluded.deleted_at,
             updated_at = excluded.updated_at
     """

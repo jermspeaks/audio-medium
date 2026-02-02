@@ -1,13 +1,100 @@
 """Podcast API endpoints."""
+import hashlib
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Query, HTTPException
 
-from database import get_all_podcasts, get_podcast_by_uuid, get_episodes_by_podcast, get_connection, upsert_podcast
-from api.schemas import PodcastResponse, EpisodeResponse, RefreshMetadataResponse
-from api.utils.rss_fetcher import fetch_podcast_metadata
+from database import (
+    get_all_podcasts,
+    get_podcast_by_uuid,
+    get_podcast_by_feed_url,
+    get_episodes_by_podcast,
+    get_connection,
+    upsert_podcast,
+    upsert_episode,
+)
+from api.schemas import (
+    PodcastResponse,
+    EpisodeResponse,
+    RefreshMetadataResponse,
+    PodcastSubscribeRequest,
+    PodcastUpdateRequest,
+    FeedRefreshResponse,
+)
+from api.utils.rss_fetcher import fetch_podcast_metadata, fetch_podcast_with_episodes
+from api.services.feed_refresh import refresh_all_feeds
 
 router = APIRouter()
+
+
+def _canonical_feed_url(feed_url: str) -> str:
+    return (feed_url or "").strip().rstrip("/")
+
+
+def _podcast_uuid_from_feed_url(feed_url: str) -> str:
+    return hashlib.sha256(_canonical_feed_url(feed_url).encode("utf-8")).hexdigest()[:32]
+
+
+@router.post("/subscribe", response_model=PodcastResponse)
+def subscribe_to_podcast(body: PodcastSubscribeRequest):
+    """Subscribe to a podcast by RSS feed URL. Fetches metadata and episodes, then stores them."""
+    feed_url = _canonical_feed_url(body.feed_url)
+    if not feed_url or not feed_url.startswith("http"):
+        raise HTTPException(status_code=400, detail="Valid feed URL is required")
+    try:
+        data = fetch_podcast_with_episodes(feed_url)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Failed to fetch feed: {e}") from e
+    title = (data.get("title") or "").strip() or None
+    if not title and not data.get("entries"):
+        raise HTTPException(status_code=422, detail="Feed could not be parsed or has no content")
+    existing = get_podcast_by_feed_url(feed_url)
+    podcast_uuid = existing["uuid"] if existing else _podcast_uuid_from_feed_url(feed_url)
+    author = (data.get("author") or "").strip() or None
+    description = (data.get("description") or "").strip() or None
+    image_url = (data.get("image_url") or "").strip() or None
+    website_url = (data.get("website_url") or "").strip() or None
+    upsert_podcast(
+        uuid=podcast_uuid,
+        title=title or "Untitled Podcast",
+        author=author,
+        description=description,
+        feed_url=feed_url,
+        website_url=website_url,
+        image_url=image_url,
+        deleted_at=None,
+    )
+    with get_connection() as conn:
+        for ep in data.get("entries") or []:
+            upsert_episode(
+                uuid=ep["uuid"],
+                podcast_uuid=podcast_uuid,
+                title=ep.get("title"),
+                description=ep.get("description"),
+                duration=ep.get("duration"),
+                published_date=ep.get("published_date"),
+                file_url=ep.get("file_url"),
+                file_type=ep.get("file_type"),
+                size_bytes=ep.get("size_bytes"),
+                video_url=ep.get("video_url"),
+                deleted_at=None,
+                conn=conn,
+            )
+    row = get_podcast_by_uuid(podcast_uuid)
+    return PodcastResponse(**dict(row))
+
+
+@router.post("/refresh-feeds", response_model=FeedRefreshResponse)
+def refresh_feeds():
+    """Fetch new episodes from RSS for all active podcasts with feed URLs."""
+    podcasts_refreshed, episodes_added, episodes_updated, errors = refresh_all_feeds()
+    return FeedRefreshResponse(
+        podcasts_refreshed=podcasts_refreshed,
+        episodes_added=episodes_added,
+        episodes_updated=episodes_updated,
+        errors=errors,
+    )
 
 
 @router.post("/refresh-metadata", response_model=RefreshMetadataResponse)
@@ -71,6 +158,73 @@ def get_podcast(uuid: str):
     if not row:
         raise HTTPException(status_code=404, detail="Podcast not found")
     return PodcastResponse(**dict(row))
+
+
+@router.put("/{uuid}", response_model=PodcastResponse)
+def update_podcast(uuid: str, body: PodcastUpdateRequest):
+    """Update podcast metadata (title, author, description, image_url, feed_url, website_url)."""
+    row = get_podcast_by_uuid(uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+    title = body.title if body.title is not None else row.get("title")
+    author = body.author if body.author is not None else row.get("author")
+    description = body.description if body.description is not None else row.get("description")
+    image_url = body.image_url if body.image_url is not None else row.get("image_url")
+    feed_url = body.feed_url if body.feed_url is not None else row.get("feed_url")
+    website_url = body.website_url if body.website_url is not None else row.get("website_url")
+    upsert_podcast(
+        uuid=uuid,
+        title=title,
+        author=author,
+        description=description,
+        feed_url=feed_url,
+        website_url=website_url,
+        image_url=image_url,
+        deleted_at=row.get("deleted_at"),
+    )
+    updated = get_podcast_by_uuid(uuid)
+    return PodcastResponse(**dict(updated))
+
+
+@router.post("/{uuid}/archive", response_model=PodcastResponse)
+def archive_podcast(uuid: str):
+    """Archive a podcast (soft delete)."""
+    row = get_podcast_by_uuid(uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+    now = datetime.utcnow().isoformat() + "Z"
+    upsert_podcast(
+        uuid=uuid,
+        title=row.get("title"),
+        author=row.get("author"),
+        description=row.get("description"),
+        feed_url=row.get("feed_url"),
+        website_url=row.get("website_url"),
+        image_url=row.get("image_url"),
+        deleted_at=now,
+    )
+    updated = get_podcast_by_uuid(uuid, include_deleted=True)
+    return PodcastResponse(**dict(updated))
+
+
+@router.post("/{uuid}/unarchive", response_model=PodcastResponse)
+def unarchive_podcast(uuid: str):
+    """Restore an archived podcast."""
+    row = get_podcast_by_uuid(uuid, include_deleted=True)
+    if not row:
+        raise HTTPException(status_code=404, detail="Podcast not found")
+    upsert_podcast(
+        uuid=uuid,
+        title=row.get("title"),
+        author=row.get("author"),
+        description=row.get("description"),
+        feed_url=row.get("feed_url"),
+        website_url=row.get("website_url"),
+        image_url=row.get("image_url"),
+        deleted_at=None,
+    )
+    updated = get_podcast_by_uuid(uuid)
+    return PodcastResponse(**dict(updated))
 
 
 @router.get("/{uuid}/episodes", response_model=list[EpisodeResponse])

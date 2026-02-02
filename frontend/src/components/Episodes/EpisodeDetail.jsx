@@ -81,6 +81,22 @@ export default function EpisodeDetail({ episode, history, sessions, onHistoryUpd
               </dd>
             </div>
           )}
+          {episode?.video_url && (
+            <div className="sm:col-span-2">
+              <dt className="text-sm text-slate-500 dark:text-slate-400">Video link</dt>
+              <dd>
+                <a
+                  href={episode.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1 break-all"
+                >
+                  {episode.video_url}
+                  <span aria-hidden className="text-slate-400 shrink-0">↗</span>
+                </a>
+              </dd>
+            </div>
+          )}
         </dl>
         {episode?.description && (
           <p className="mt-4 text-slate-600 dark:text-slate-300 text-sm line-clamp-4">

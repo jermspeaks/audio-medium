@@ -1,14 +1,26 @@
 """FastAPI application for podcasts listening history."""
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routers import podcasts, episodes, stats, sync, settings
 from api.routers.search import router as search_router
+from api.services.feed_refresh_scheduler import start_scheduler, stop_scheduler
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    yield
+    stop_scheduler()
+
 
 app = FastAPI(
     title="Audiophile API",
     description="API for Audiophile – podcast listening history and statistics",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

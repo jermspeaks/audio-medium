@@ -23,6 +23,12 @@ export default function AppLayout() {
                 Podcasts
               </Link>
               <Link
+                to="/podcasts/subscribe"
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+              >
+                Subscribe
+              </Link>
+              <Link
                 to="/search"
                 className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
               >

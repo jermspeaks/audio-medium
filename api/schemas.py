@@ -32,6 +32,7 @@ class EpisodeResponse(BaseModel):
     file_url: Optional[str] = None
     file_type: Optional[str] = None
     size_bytes: Optional[int] = None
+    video_url: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     podcast_title: Optional[str] = None
@@ -167,3 +168,26 @@ class RemoveDuplicatesResponse(BaseModel):
     """Response after removing duplicate podcasts."""
     deleted_count: int = 0
     deleted_titles: List[str] = []
+
+
+class PodcastSubscribeRequest(BaseModel):
+    """Request body for subscribing to a podcast feed."""
+    feed_url: str
+
+
+class PodcastUpdateRequest(BaseModel):
+    """Request body for updating podcast metadata."""
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    feed_url: Optional[str] = None
+    website_url: Optional[str] = None
+
+
+class FeedRefreshResponse(BaseModel):
+    """Response after refreshing feeds (fetching new episodes)."""
+    podcasts_refreshed: int = 0
+    episodes_added: int = 0
+    episodes_updated: int = 0
+    errors: List[str] = []

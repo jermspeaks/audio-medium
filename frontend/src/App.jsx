@@ -7,6 +7,8 @@ import PodcastDetailPage from './pages/PodcastDetailPage';
 import FeedPage from './pages/FeedPage';
 import EpisodeDetailPage from './pages/EpisodeDetailPage';
 import SearchPage from './pages/SearchPage';
+import SubscribePage from './pages/SubscribePage';
+import EditPodcastPage from './pages/EditPodcastPage';
 import SyncPage from './pages/SyncPage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -19,7 +21,9 @@ export default function App() {
           <Route path="feed" element={<FeedPage />} />
           <Route path="feed/:uuid" element={<EpisodeDetailPage />} />
           <Route path="podcasts" element={<PodcastsPage />} />
+          <Route path="podcasts/subscribe" element={<SubscribePage />} />
           <Route path="podcasts/:uuid" element={<PodcastDetailPage />} />
+          <Route path="podcasts/:uuid/edit" element={<EditPodcastPage />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="system" element={<SystemLayout />}>
             <Route index element={<Navigate to="/system/stats" replace />} />
