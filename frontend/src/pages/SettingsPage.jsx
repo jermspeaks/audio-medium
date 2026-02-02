@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { importOPML, removeDuplicatePodcasts } from '../api/settings';
 import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
@@ -50,6 +50,10 @@ export default function SettingsPage() {
       setDupLoading(false);
     }
   };
+
+  useEffect(() => {
+    document.title = 'Settings | Audiophile';
+  }, []);
 
   return (
     <div className="space-y-6">

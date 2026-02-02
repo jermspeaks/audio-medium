@@ -16,6 +16,10 @@ export default function FeedPage() {
   const [playingStatus, setPlayingStatus] = useState('');
 
   useEffect(() => {
+    document.title = 'Feed | Audiophile';
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function fetchData() {
       setLoading(true);

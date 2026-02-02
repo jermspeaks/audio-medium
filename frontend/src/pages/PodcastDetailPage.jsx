@@ -30,6 +30,13 @@ export default function PodcastDetailPage() {
   }, [uuid]);
 
   useEffect(() => {
+    if (podcast?.title) {
+      document.title = `${podcast.title} | Audiophile`;
+      return () => { document.title = 'Audiophile'; };
+    }
+  }, [podcast?.title]);
+
+  useEffect(() => {
     if (!uuid) return;
     let cancelled = false;
     async function fetchEpisodes() {

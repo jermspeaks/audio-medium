@@ -6,8 +6,8 @@ from api.routers import podcasts, episodes, stats, sync, settings
 from api.routers.search import router as search_router
 
 app = FastAPI(
-    title="Podcasts Listening History API",
-    description="API for viewing podcast listening history and statistics",
+    title="Audiophile API",
+    description="API for Audiophile – podcast listening history and statistics",
     version="1.0.0",
 )
 

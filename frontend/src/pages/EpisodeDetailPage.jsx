@@ -40,6 +40,13 @@ export default function EpisodeDetailPage() {
     return () => { cancelled = true; };
   }, [uuid, fetchData]);
 
+  useEffect(() => {
+    if (episode?.title) {
+      document.title = `${episode.title} | Audiophile`;
+      return () => { document.title = 'Audiophile'; };
+    }
+  }, [episode?.title]);
+
   const handleHistoryUpdated = useCallback(() => {
     fetchData();
   }, [fetchData]);

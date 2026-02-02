@@ -7,7 +7,7 @@ export default function AppLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             <Link to="/feed" className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-              Podcasts Listening History
+              Audiophile
             </Link>
             <nav className="flex gap-6">
               <Link
@@ -42,7 +42,7 @@ export default function AppLayout() {
         <Outlet />
       </main>
       <footer className="border-t border-slate-200 dark:border-slate-700 mt-auto py-4 text-center text-sm text-slate-500 dark:text-slate-400">
-        Podcasts Listening History
+        Audiophile
       </footer>
     </div>
   );

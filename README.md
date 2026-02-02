@@ -1,4 +1,4 @@
-# Podcasts Reviewer
+# Audiophile
 
 Import your Pocket Casts listening history from iOS into a SQLite database, run analytics from the command line, and browse everything in a **web app** (FastAPI + React).
 

@@ -46,6 +46,10 @@ export default function SyncPage() {
   }
 
   useEffect(() => {
+    document.title = 'Sync | Audiophile';
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function load() {
       await fetchData();

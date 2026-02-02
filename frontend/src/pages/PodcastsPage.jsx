@@ -15,6 +15,10 @@ export default function PodcastsPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
+    document.title = 'Podcasts | Audiophile';
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function fetchData() {
       setLoading(true);

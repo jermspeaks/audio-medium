@@ -11,6 +11,10 @@ export default function StatsPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    document.title = 'Stats | Audiophile';
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function fetchData() {
       try {

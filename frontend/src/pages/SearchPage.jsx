@@ -16,6 +16,10 @@ export default function SearchPage() {
   const [playingStatus, setPlayingStatus] = useState('');
 
   useEffect(() => {
+    document.title = q.trim() ? `Search: ${q} | Audiophile` : 'Search | Audiophile';
+  }, [q]);
+
+  useEffect(() => {
     if (!q.trim()) {
       setResults({ podcasts: [], episodes: [] });
       return;
