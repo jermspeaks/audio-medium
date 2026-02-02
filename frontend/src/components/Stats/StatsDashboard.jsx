@@ -24,7 +24,7 @@ export default function StatsDashboard({ summary, topPodcasts }) {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Stats</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((c) => (
           <div

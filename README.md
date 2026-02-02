@@ -130,7 +130,7 @@ npm run dev
 
 | Route | Description |
 |-------|-------------|
-| `/` | Dashboard – total hours, episodes, completion stats, top podcasts chart |
+| `/` | Stats – total hours, episodes, completion stats, top podcasts chart |
 | `/podcasts` | Podcast list with search; click for detail and episodes |
 | `/episodes` | Episode list with status filter; click for detail, history, play sessions |
 | `/search?q=...` | Search podcasts and episodes |
@@ -156,6 +156,26 @@ The **Sync** page at `/sync` lets you:
 - Upload a Pocket Casts export ZIP to sync from your device.
 - See a summary of the last run (added/updated/deleted counts, conflicts).
 - Browse a table of recent sync history (timestamp, source, counts).
+
+### Refresh metadata from RSS
+
+You can refresh podcast metadata (title, author, description, image) from RSS feeds without running a script. Only podcasts that already have a non-empty `feed_url` are refreshed (run OPML enrichment first if needed).
+
+**Backend**
+
+- `POST /api/podcasts/refresh-metadata` – Fetches metadata from each podcast’s RSS feed and updates the database. Returns `podcasts_refreshed`, `podcasts_updated`, and `errors`.
+
+**How to run**
+
+1. Start the API (from project root):
+
+   ```bash
+   uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
+   ```
+
+2. Call the endpoint:
+   - **Browser:** Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs), find **POST /api/podcasts/refresh-metadata**, click “Try it out”, then “Execute”.
+   - **Terminal:** `curl -X POST http://127.0.0.1:8000/api/podcasts/refresh-metadata`
 
 ## Project layout
 

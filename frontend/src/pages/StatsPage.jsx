@@ -4,7 +4,7 @@ import StatsDashboard from '../components/Stats/StatsDashboard';
 import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
 
-export default function DashboardPage() {
+export default function StatsPage() {
   const [summary, setSummary] = useState(null);
   const [topPodcasts, setTopPodcasts] = useState(null);
   const [loading, setLoading] = useState(true);

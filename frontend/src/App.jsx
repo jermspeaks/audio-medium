@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
 import SystemLayout from './components/Layout/SystemLayout';
-import DashboardPage from './pages/DashboardPage';
+import StatsPage from './pages/StatsPage';
 import PodcastsPage from './pages/PodcastsPage';
 import PodcastDetailPage from './pages/PodcastDetailPage';
 import FeedPage from './pages/FeedPage';
@@ -22,8 +22,8 @@ export default function App() {
           <Route path="podcasts/:uuid" element={<PodcastDetailPage />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="system" element={<SystemLayout />}>
-            <Route index element={<Navigate to="/system/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route index element={<Navigate to="/system/stats" replace />} />
+            <Route path="stats" element={<StatsPage />} />
             <Route path="sync" element={<SyncPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

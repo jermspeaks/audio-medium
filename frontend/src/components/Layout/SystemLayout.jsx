@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
-  { to: '/system/dashboard', label: 'Dashboard' },
+  { to: '/system/stats', label: 'Stats' },
   { to: '/system/sync', label: 'Sync' },
   { to: '/system/settings', label: 'Settings' },
 ];
