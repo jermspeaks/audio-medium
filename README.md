@@ -1,6 +1,17 @@
 # Audiophile
 
-Import your Pocket Casts listening history from iOS into a SQLite database, run analytics from the command line, and browse everything in a **web app** (FastAPI + React).
+A comprehensive podcast listening history management system. Import your Pocket Casts listening history from iOS, manage your podcast library, track playback progress, and explore detailed analytics—all through a modern **web app** (FastAPI + React) or command-line tools.
+
+## Features
+
+- **Import & Sync**: Import listening history from Pocket Casts exports (ZIP or database), with incremental sync support
+- **Podcast Management**: Browse podcasts, search, filter episodes by status, and view detailed metadata
+- **Audio Playback**: Built-in audio player with automatic progress tracking and resume functionality
+- **OPML Import**: Import podcast subscriptions from OPML files and enrich metadata from RSS feeds
+- **Data Management**: Remove duplicate podcasts, refresh metadata from RSS feeds, and manage your library
+- **Analytics Dashboard**: View listening statistics, completion rates, top podcasts, and detailed charts
+- **Search**: Full-text search across podcasts and episodes
+- **Sync History**: Track sync operations with detailed reports and history
 
 ## How to Export Pocket Casts Database from iOS
 
@@ -105,7 +116,7 @@ python3 extract_pocketcasts.py dummy.zip --db-path path/to/database.sqlite3 --js
 
 ## Web App
 
-A **FastAPI** backend and **React** (Vite + Tailwind) frontend let you view listening history, stats, and play sessions in the browser.
+A full-featured **FastAPI** backend and **React** (Vite + Tailwind) frontend provide a complete podcast management interface in your browser. Browse your library, play episodes, track progress, manage subscriptions, and view detailed analytics—all in one place.
 
 **1. Run the API** (from project root):
 
@@ -130,15 +141,16 @@ npm run dev
 
 | Route | Description |
 |-------|-------------|
-| `/` | Stats – total hours, episodes, completion stats, top podcasts chart |
-| `/podcasts` | Podcast list with search; click for detail and episodes |
-| `/episodes` | Episode list with status filter; click for detail, history, play sessions |
-| `/search?q=...` | Search podcasts and episodes |
-| `/sync` | Sync – trigger sync from default path or upload ZIP; view status and history |
+| `/` | **Stats Dashboard** – Total listening hours, episodes, completion rates, top podcasts chart, and listening trends |
+| `/podcasts` | **Podcast Library** – Browse all podcasts with search; click for detailed view and episode list |
+| `/episodes` | **Episode Feed** – Browse all episodes with status filters (not played, in progress, completed); click for detail, audio player, and play sessions |
+| `/search?q=...` | **Search** – Full-text search across podcasts and episodes |
+| `/sync` | **Sync** – Trigger sync from default path or upload ZIP; view sync status and history |
+| `/settings` | **Settings** – Import OPML files, remove duplicate podcasts, manage your library |
 
 ### Sync from the web app
 
-You can sync your listening history from the web app instead of the command line.
+You can sync your listening history from the web app instead of the command line. The sync feature supports both server-side exports and direct ZIP uploads.
 
 **Backend (sync API)**
 
@@ -156,6 +168,17 @@ The **Sync** page at `/sync` lets you:
 - Upload a Pocket Casts export ZIP to sync from your device.
 - See a summary of the last run (added/updated/deleted counts, conflicts).
 - Browse a table of recent sync history (timestamp, source, counts).
+
+### Audio Player
+
+The web app includes a built-in audio player for episodes with available audio files. Features include:
+
+- **Resume playback**: Automatically resumes from your last listening position
+- **Progress tracking**: Playback position is automatically synced to the database every 5 seconds
+- **Status updates**: Episode status (not played, in progress, completed) updates automatically based on playback
+- **Play sessions**: Individual listening sessions are tracked for detailed history
+
+The audio player is available on episode detail pages and automatically saves your progress as you listen.
 
 ### Refresh metadata from RSS
 
@@ -177,10 +200,43 @@ You can refresh podcast metadata (title, author, description, image) from RSS fe
    - **Browser:** Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs), find **POST /api/podcasts/refresh-metadata**, click “Try it out”, then “Execute”.
    - **Terminal:** `curl -X POST http://127.0.0.1:8000/api/podcasts/refresh-metadata`
 
+### OPML Import and Duplicate Cleanup
+
+The **Settings** page at `/settings` provides additional library management features accessible through the web interface:
+
+**OPML Import**
+
+- Upload an OPML file to import podcast subscriptions
+- Automatically adds missing podcasts to your library
+- Enriches metadata from RSS feeds for all imported podcasts
+- Updates existing podcasts with new information
+- Reports detailed import statistics (found, added, updated, errors)
+
+**Backend API:**
+- `POST /api/settings/opml/import` – Upload an OPML file and import subscriptions
+
+**Duplicate Cleanup**
+
+- Remove duplicate podcast entries intelligently:
+  - Matches podcasts with the same feed URL (keeps the one with episodes)
+  - Matches podcasts by normalized title (keeps the one with episodes)
+  - Automatically deletes empty duplicates created during OPML imports
+- Provides a detailed report of deleted podcasts
+
+**Backend API:**
+- `POST /api/settings/podcasts/remove-duplicates` – Remove duplicate podcasts
+
+Both features are also available through the web UI on the Settings page for easy access.
+
 ## Project layout
 
-- `api/` – FastAPI app and routers (podcasts, episodes, stats, search, sync)
+- `api/` – FastAPI app and routers (podcasts, episodes, stats, search, sync, settings)
+  - `api/routers/` – API endpoints for podcasts, episodes, stats, search, sync, settings
+  - `api/services/` – Business logic (OPML import, duplicate cleanup)
+  - `api/utils/` – Utilities (RSS fetcher, OPML parser)
 - `frontend/` – React app (Vite, React Router, Tailwind, Recharts)
+  - `frontend/src/pages/` – Page components (Stats, Podcasts, Episodes, Search, Sync, Settings)
+  - `frontend/src/components/` – Reusable components (AudioPlayer, EpisodeCard, PodcastCard, etc.)
 - `database.py` – SQLite schema and query helpers
 - `listening_stats.py` – Analytics used by CLI and API
 - `import_pocketcasts.py` – Import from Pocket Casts export
