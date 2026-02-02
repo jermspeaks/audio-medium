@@ -120,10 +120,32 @@ npm run dev
 | `/podcasts` | Podcast list with search; click for detail and episodes |
 | `/episodes` | Episode list with status filter; click for detail, history, play sessions |
 | `/search?q=...` | Search podcasts and episodes |
+| `/sync` | Sync – trigger sync from default path or upload ZIP; view status and history |
+
+### Sync from the web app
+
+You can sync your listening history from the web app instead of the command line.
+
+**Backend (sync API)**
+
+- `POST /api/sync` – Sync from the default Pocket Casts export path on the server. Requires the source database at `POCKETCASTS_SOURCE_DB_PATH` (or the default `Pocket Casts Export/export.pcasts/database.sqlite3`). Returns a sync report (podcasts/episodes added, updated, deleted; conflicts resolved).
+- `POST /api/sync/upload` – Upload a Pocket Casts export ZIP file and run sync. Accepts only `.zip` files. Returns the same sync report.
+- `GET /api/sync/status` – Last sync timestamp and optional summary (source path, podcasts/episodes added).
+- `GET /api/sync/history` – List of past sync runs with `limit` and `offset` query parameters.
+
+**Frontend (Sync page)**
+
+The **Sync** page at `/sync` lets you:
+
+- View the last sync time and source.
+- Click **Sync now** to sync from the server’s default export path (fails with a clear message if the source is missing).
+- Upload a Pocket Casts export ZIP to sync from your device.
+- See a summary of the last run (added/updated/deleted counts, conflicts).
+- Browse a table of recent sync history (timestamp, source, counts).
 
 ## Project layout
 
-- `api/` – FastAPI app and routers (podcasts, episodes, stats, search)
+- `api/` – FastAPI app and routers (podcasts, episodes, stats, search, sync)
 - `frontend/` – React app (Vite, React Router, Tailwind, Recharts)
 - `database.py` – SQLite schema and query helpers
 - `listening_stats.py` – Analytics used by CLI and API
