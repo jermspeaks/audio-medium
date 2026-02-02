@@ -21,16 +21,29 @@ export default function EpisodeDetail({ episode, history, sessions }) {
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h1>
-        {episode?.podcast_uuid && (
-          <Link
-            to={`/podcasts/${episode.podcast_uuid}`}
-            className="inline-block mt-2 text-slate-600 dark:text-slate-300 hover:underline"
-          >
-            {episode.podcast_title || 'Podcast'}
-          </Link>
-        )}
-        <dl className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="flex gap-6">
+          {episode?.podcast_image_url ? (
+            <img
+              src={episode.podcast_image_url}
+              alt=""
+              className="w-24 h-24 rounded-xl object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center text-4xl">
+              🎙
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h1>
+            {episode?.podcast_uuid && (
+              <Link
+                to={`/podcasts/${episode.podcast_uuid}`}
+                className="inline-block mt-2 text-slate-600 dark:text-slate-300 hover:underline"
+              >
+                {episode.podcast_title || 'Podcast'}
+              </Link>
+            )}
+            <dl className="mt-4 grid gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-slate-500 dark:text-slate-400">Status</dt>
             <dd className="font-medium">{statusLabel}</dd>
@@ -51,12 +64,30 @@ export default function EpisodeDetail({ episode, history, sessions }) {
               <dd className="font-medium">{episode.play_count}</dd>
             </div>
           )}
+          {episode?.file_url && (
+            <div className="sm:col-span-2">
+              <dt className="text-sm text-slate-500 dark:text-slate-400">Episode link</dt>
+              <dd>
+                <a
+                  href={episode.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1 break-all"
+                >
+                  {episode.file_url}
+                  <span aria-hidden className="text-slate-400 shrink-0">↗</span>
+                </a>
+              </dd>
+            </div>
+          )}
         </dl>
         {episode?.description && (
           <p className="mt-4 text-slate-600 dark:text-slate-300 text-sm line-clamp-4">
             {episode.description}
           </p>
         )}
+          </div>
+        </div>
       </div>
 
       {history && (

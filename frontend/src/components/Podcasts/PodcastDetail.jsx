@@ -26,6 +26,19 @@ export default function PodcastDetail({ podcast, episodes }) {
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
               {podcast?.episode_count ?? 0} episodes in history
             </p>
+            {podcast?.feed_url && (
+              <p className="mt-2">
+                <a
+                  href={podcast.feed_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
+                >
+                  RSS Feed
+                  <span aria-hidden className="text-slate-400">↗</span>
+                </a>
+              </p>
+            )}
             {podcast?.description && (
               <p className="mt-3 text-slate-600 dark:text-slate-300 text-sm line-clamp-3">
                 {podcast.description}
