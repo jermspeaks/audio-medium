@@ -1,13 +1,14 @@
 """Feed refresh service: fetch new episodes from RSS for all active podcasts."""
 from typing import List, Tuple
 
-from database import get_connection, upsert_episode
-from api.utils.rss_fetcher import fetch_podcast_with_episodes
+from database import get_connection, upsert_episode, update_podcast_is_ended
+from api.utils.rss_fetcher import fetch_podcast_with_episodes, FeedNotFoundError
 
 
 def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
     """
     Fetch new episodes from RSS for all active podcasts with feed URLs.
+    Skips soft-deleted and ended podcasts. Marks podcast as ended when feed returns 404/410.
     Returns (podcasts_refreshed, episodes_added, episodes_updated, errors).
     """
     errors: List[str] = []
@@ -15,8 +16,9 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
     episodes_updated = 0
     with get_connection() as conn:
         cur = conn.execute(
-            """SELECT uuid, feed_url FROM podcasts
-               WHERE deleted_at IS NULL AND feed_url IS NOT NULL AND TRIM(feed_url) != ''"""
+            """SELECT uuid, feed_url, title FROM podcasts
+               WHERE deleted_at IS NULL AND (is_ended IS NULL OR is_ended = 0)
+                 AND feed_url IS NOT NULL AND TRIM(feed_url) != ''"""
         )
         rows = [dict(row) for row in cur.fetchall()]
     podcasts_refreshed = len(rows)
@@ -26,6 +28,11 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
             continue
         try:
             data = fetch_podcast_with_episodes(feed_url)
+        except FeedNotFoundError:
+            update_podcast_is_ended(row["uuid"], True)
+            title = (row.get("title") or "").strip() or row.get("uuid", "")
+            errors.append(f"{title}: Feed no longer available (marked as ended)")
+            continue
         except Exception as e:
             errors.append(f"{row.get('uuid', '')}: {e}")
             continue

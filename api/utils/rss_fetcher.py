@@ -7,6 +7,14 @@ from typing import Any, Dict, List, Optional
 RSS_FETCH_TIMEOUT = 15
 
 
+class FeedNotFoundError(Exception):
+    """Raised when a feed returns HTTP 404 Not Found or 410 Gone."""
+
+    def __init__(self, status: int, message: Optional[str] = None):
+        self.status = status
+        super().__init__(message or f"Feed not available (HTTP {status})")
+
+
 def fetch_podcast_with_episodes(feed_url: str) -> Dict[str, Any]:
     """
     Fetch RSS feed and extract podcast metadata plus all episode entries.
@@ -30,6 +38,10 @@ def fetch_podcast_with_episodes(feed_url: str) -> Dict[str, Any]:
         )
     except Exception:
         return result
+
+    status = getattr(parsed, "status", None)
+    if status in (404, 410):
+        raise FeedNotFoundError(status)
 
     feed = getattr(parsed, "feed", None)
     if not feed:

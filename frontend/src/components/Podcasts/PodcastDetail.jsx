@@ -45,7 +45,14 @@ export default function PodcastDetail({ podcast, episodes }) {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h1>
+              {podcast?.is_ended && (
+                <span className="rounded px-2 py-0.5 text-xs font-medium bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300">
+                  Ended
+                </span>
+              )}
+            </div>
             {podcast?.author && (
               <p className="text-slate-600 dark:text-slate-300 mt-1">{podcast.author}</p>
             )}

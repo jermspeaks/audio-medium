@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any, Union
 from contextlib import contextmanager
 
 # Schema version for migrations
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 CREATE_PODCASTS = """
 CREATE TABLE IF NOT EXISTS podcasts (
@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS podcasts (
     website_url TEXT,
     image_url TEXT,
     deleted_at TEXT,
+    is_ended INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -187,6 +188,16 @@ def _migrate_schema(conn: sqlite3.Connection) -> None:
         except sqlite3.OperationalError:
             pass
 
+    # Migration to v5: add is_ended to podcasts
+    if current < 5:
+        try:
+            cur = conn.execute("PRAGMA table_info(podcasts)")
+            columns = [row[1] for row in cur.fetchall()]
+            if "is_ended" not in columns:
+                conn.execute("ALTER TABLE podcasts ADD COLUMN is_ended INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
     conn.execute(
         "INSERT OR REPLACE INTO _schema_meta (key, value) VALUES (?, ?)",
         ("schema_version", str(SCHEMA_VERSION)),
@@ -220,16 +231,18 @@ def upsert_podcast(
     website_url: Optional[str] = None,
     image_url: Optional[str] = None,
     deleted_at: Optional[str] = None,
+    is_ended: bool = False,
     db_path: Optional[Path] = None,
     conn: Optional[sqlite3.Connection] = None,
 ) -> None:
-    """Insert or update a podcast by uuid. Set deleted_at for soft delete."""
+    """Insert or update a podcast by uuid. Set deleted_at for soft delete, is_ended for ended feeds."""
     now = _iso_now()
+    is_ended_int = 1 if is_ended else 0
     if conn is not None:
         conn.execute(
             """
-            INSERT INTO podcasts (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO podcasts (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, is_ended, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 title = COALESCE(excluded.title, title),
                 author = COALESCE(excluded.author, author),
@@ -238,16 +251,17 @@ def upsert_podcast(
                 website_url = COALESCE(excluded.website_url, website_url),
                 image_url = COALESCE(excluded.image_url, image_url),
                 deleted_at = excluded.deleted_at,
+                is_ended = excluded.is_ended,
                 updated_at = excluded.updated_at
             """,
-            (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, now, now),
+            (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, is_ended_int, now, now),
         )
         return
     with get_connection(db_path) as c:
         c.execute(
             """
-            INSERT INTO podcasts (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO podcasts (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, is_ended, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 title = COALESCE(excluded.title, title),
                 author = COALESCE(excluded.author, author),
@@ -256,9 +270,10 @@ def upsert_podcast(
                 website_url = COALESCE(excluded.website_url, website_url),
                 image_url = COALESCE(excluded.image_url, image_url),
                 deleted_at = excluded.deleted_at,
+                is_ended = excluded.is_ended,
                 updated_at = excluded.updated_at
             """,
-            (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, now, now),
+            (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, is_ended_int, now, now),
         )
 
 
@@ -293,6 +308,27 @@ def update_podcast_feed_url(
                 "UPDATE podcasts SET feed_url = ?, updated_at = ? WHERE uuid = ?",
                 (feed_url, _iso_now(), uuid),
             )
+
+
+def update_podcast_is_ended(
+    uuid: str,
+    is_ended: bool,
+    db_path: Optional[Path] = None,
+    conn: Optional[sqlite3.Connection] = None,
+) -> None:
+    """Update only is_ended for a podcast by uuid."""
+    is_ended_int = 1 if is_ended else 0
+    if conn is not None:
+        conn.execute(
+            "UPDATE podcasts SET is_ended = ?, updated_at = ? WHERE uuid = ?",
+            (is_ended_int, _iso_now(), uuid),
+        )
+        return
+    with get_connection(db_path) as c:
+        c.execute(
+            "UPDATE podcasts SET is_ended = ?, updated_at = ? WHERE uuid = ?",
+            (is_ended_int, _iso_now(), uuid),
+        )
 
 
 def delete_podcast(

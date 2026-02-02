@@ -19,6 +19,7 @@ export default function EditPodcastPage() {
     image_url: '',
     feed_url: '',
     website_url: '',
+    is_ended: false,
   });
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function EditPodcastPage() {
             image_url: data.image_url ?? '',
             feed_url: data.feed_url ?? '',
             website_url: data.website_url ?? '',
+            is_ended: Boolean(data.is_ended),
           });
         }
       } catch (e) {
@@ -56,8 +58,8 @@ export default function EditPodcastPage() {
   }, [podcast?.title]);
 
   function handleChange(e) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   }
 
   async function handleSubmit(e) {
@@ -73,6 +75,7 @@ export default function EditPodcastPage() {
         image_url: form.image_url || undefined,
         feed_url: form.feed_url || undefined,
         website_url: form.website_url || undefined,
+        is_ended: form.is_ended,
       });
       navigate(`/podcasts/${uuid}`, { replace: true });
     } catch (e) {
@@ -175,6 +178,19 @@ export default function EditPodcastPage() {
             onChange={handleChange}
             className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2"
           />
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            id="is_ended"
+            name="is_ended"
+            type="checkbox"
+            checked={form.is_ended}
+            onChange={handleChange}
+            className="rounded border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 focus:ring-slate-500"
+          />
+          <label htmlFor="is_ended" className="text-sm text-slate-700 dark:text-slate-300">
+            Podcast has ended (no longer releasing new episodes)
+          </label>
         </div>
         <div className="flex gap-3">
           <button

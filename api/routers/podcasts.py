@@ -22,7 +22,7 @@ from api.schemas import (
     PodcastUpdateRequest,
     FeedRefreshResponse,
 )
-from api.utils.rss_fetcher import fetch_podcast_metadata, fetch_podcast_with_episodes
+from api.utils.rss_fetcher import fetch_podcast_metadata, fetch_podcast_with_episodes, FeedNotFoundError
 from api.services.feed_refresh import refresh_all_feeds
 
 router = APIRouter()
@@ -44,6 +44,8 @@ def subscribe_to_podcast(body: PodcastSubscribeRequest):
         raise HTTPException(status_code=400, detail="Valid feed URL is required")
     try:
         data = fetch_podcast_with_episodes(feed_url)
+    except FeedNotFoundError as e:
+        raise HTTPException(status_code=422, detail=f"Feed not available (HTTP {e.status})") from e
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Failed to fetch feed: {e}") from e
     title = (data.get("title") or "").strip() or None
@@ -64,6 +66,7 @@ def subscribe_to_podcast(body: PodcastSubscribeRequest):
         website_url=website_url,
         image_url=image_url,
         deleted_at=None,
+        is_ended=False,
     )
     with get_connection() as conn:
         for ep in data.get("entries") or []:
@@ -104,9 +107,10 @@ def refresh_metadata():
     podcasts_updated = 0
     with get_connection() as conn:
         cur = conn.execute(
-            """SELECT uuid, title, author, description, feed_url, website_url, image_url
+            """SELECT uuid, title, author, description, feed_url, website_url, image_url, is_ended
                FROM podcasts
-               WHERE deleted_at IS NULL AND feed_url IS NOT NULL AND TRIM(feed_url) != ''"""
+               WHERE deleted_at IS NULL AND (is_ended IS NULL OR is_ended = 0)
+                 AND feed_url IS NOT NULL AND TRIM(feed_url) != ''"""
         )
         rows = [dict(row) for row in cur.fetchall()]
     podcasts_refreshed = len(rows)
@@ -123,6 +127,7 @@ def refresh_metadata():
         author = (rss_meta.get("author") or "").strip() or row.get("author")
         description = (rss_meta.get("description") or "").strip() or row.get("description")
         image_url = (rss_meta.get("image_url") or "").strip() or row.get("image_url")
+        is_ended = bool(row.get("is_ended", 0))
         upsert_podcast(
             uuid=row["uuid"],
             title=title,
@@ -131,6 +136,7 @@ def refresh_metadata():
             feed_url=row.get("feed_url"),
             website_url=row.get("website_url"),
             image_url=image_url,
+            is_ended=is_ended,
         )
         podcasts_updated += 1
     return RefreshMetadataResponse(
@@ -162,7 +168,7 @@ def get_podcast(uuid: str):
 
 @router.put("/{uuid}", response_model=PodcastResponse)
 def update_podcast(uuid: str, body: PodcastUpdateRequest):
-    """Update podcast metadata (title, author, description, image_url, feed_url, website_url)."""
+    """Update podcast metadata (title, author, description, image_url, feed_url, website_url, is_ended)."""
     row = get_podcast_by_uuid(uuid)
     if not row:
         raise HTTPException(status_code=404, detail="Podcast not found")
@@ -172,6 +178,7 @@ def update_podcast(uuid: str, body: PodcastUpdateRequest):
     image_url = body.image_url if body.image_url is not None else row.get("image_url")
     feed_url = body.feed_url if body.feed_url is not None else row.get("feed_url")
     website_url = body.website_url if body.website_url is not None else row.get("website_url")
+    is_ended = body.is_ended if body.is_ended is not None else bool(row.get("is_ended", 0))
     upsert_podcast(
         uuid=uuid,
         title=title,
@@ -181,6 +188,7 @@ def update_podcast(uuid: str, body: PodcastUpdateRequest):
         website_url=website_url,
         image_url=image_url,
         deleted_at=row.get("deleted_at"),
+        is_ended=is_ended,
     )
     updated = get_podcast_by_uuid(uuid)
     return PodcastResponse(**dict(updated))
@@ -193,6 +201,7 @@ def archive_podcast(uuid: str):
     if not row:
         raise HTTPException(status_code=404, detail="Podcast not found")
     now = datetime.utcnow().isoformat() + "Z"
+    is_ended = bool(row.get("is_ended", 0))
     upsert_podcast(
         uuid=uuid,
         title=row.get("title"),
@@ -202,6 +211,7 @@ def archive_podcast(uuid: str):
         website_url=row.get("website_url"),
         image_url=row.get("image_url"),
         deleted_at=now,
+        is_ended=is_ended,
     )
     updated = get_podcast_by_uuid(uuid, include_deleted=True)
     return PodcastResponse(**dict(updated))
@@ -213,6 +223,7 @@ def unarchive_podcast(uuid: str):
     row = get_podcast_by_uuid(uuid, include_deleted=True)
     if not row:
         raise HTTPException(status_code=404, detail="Podcast not found")
+    is_ended = bool(row.get("is_ended", 0))
     upsert_podcast(
         uuid=uuid,
         title=row.get("title"),
@@ -222,6 +233,7 @@ def unarchive_podcast(uuid: str):
         website_url=row.get("website_url"),
         image_url=row.get("image_url"),
         deleted_at=None,
+        is_ended=is_ended,
     )
     updated = get_podcast_by_uuid(uuid)
     return PodcastResponse(**dict(updated))

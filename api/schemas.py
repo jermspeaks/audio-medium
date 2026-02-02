@@ -13,6 +13,7 @@ class PodcastResponse(BaseModel):
     feed_url: Optional[str] = None
     website_url: Optional[str] = None
     image_url: Optional[str] = None
+    is_ended: Optional[bool] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     episode_count: Optional[int] = None
@@ -183,6 +184,7 @@ class PodcastUpdateRequest(BaseModel):
     image_url: Optional[str] = None
     feed_url: Optional[str] = None
     website_url: Optional[str] = None
+    is_ended: Optional[bool] = None
 
 
 class FeedRefreshResponse(BaseModel):
