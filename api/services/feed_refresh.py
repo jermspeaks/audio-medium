@@ -2,7 +2,7 @@
 import logging
 from typing import List, Tuple
 
-from database import get_connection, upsert_episode, update_podcast_is_ended
+from database import get_connection, upsert_episode, upsert_listening_history, update_podcast_is_ended
 from api.utils.rss_fetcher import fetch_podcast_with_episodes, FeedNotFoundError
 
 logger = logging.getLogger(__name__)
@@ -75,6 +75,14 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
                     deleted_at=None,
                     conn=conn,
                 )
+                if uid not in existing_uuids:
+                    upsert_listening_history(
+                        uid,
+                        played_up_to=0,
+                        duration=ep.get("duration") or 0,
+                        playing_status=1,
+                        conn=conn,
+                    )
         logger.info(
             "Refreshed %s: %d entries (%d new, %d updated)",
             title,
