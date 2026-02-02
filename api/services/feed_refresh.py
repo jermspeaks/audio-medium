@@ -1,8 +1,11 @@
 """Feed refresh service: fetch new episodes from RSS for all active podcasts."""
+import logging
 from typing import List, Tuple
 
 from database import get_connection, upsert_episode, update_podcast_is_ended
 from api.utils.rss_fetcher import fetch_podcast_with_episodes, FeedNotFoundError
+
+logger = logging.getLogger(__name__)
 
 
 def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
@@ -22,33 +25,42 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
         )
         rows = [dict(row) for row in cur.fetchall()]
     podcasts_refreshed = len(rows)
+    logger.info("Starting feed refresh for %d podcasts", podcasts_refreshed)
     for row in rows:
         feed_url = (row.get("feed_url") or "").strip()
         if not feed_url:
             continue
+        title = (row.get("title") or "").strip() or row.get("uuid", "")
+        logger.info("Refreshing feed: %s (%s)", title, feed_url)
         try:
             data = fetch_podcast_with_episodes(feed_url)
         except FeedNotFoundError:
             update_podcast_is_ended(row["uuid"], True)
-            title = (row.get("title") or "").strip() or row.get("uuid", "")
             errors.append(f"{title}: Feed no longer available (marked as ended)")
+            logger.warning("Feed no longer available: %s (marked as ended)", title)
             continue
         except Exception as e:
             errors.append(f"{row.get('uuid', '')}: {e}")
+            logger.warning("Feed refresh failed for %s: %s", title, e)
             continue
         podcast_uuid = row["uuid"]
+        entries = data.get("entries") or []
+        local_added = 0
+        local_updated = 0
         with get_connection() as conn:
             cur = conn.execute(
                 "SELECT uuid FROM episodes WHERE podcast_uuid = ? AND deleted_at IS NULL",
                 (podcast_uuid,),
             )
             existing_uuids = {r["uuid"] for r in cur.fetchall()}
-            for ep in data.get("entries") or []:
+            for ep in entries:
                 uid = ep["uuid"]
                 if uid not in existing_uuids:
                     episodes_added += 1
+                    local_added += 1
                 else:
                     episodes_updated += 1
+                    local_updated += 1
                 upsert_episode(
                     uuid=uid,
                     podcast_uuid=podcast_uuid,
@@ -63,4 +75,11 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
                     deleted_at=None,
                     conn=conn,
                 )
+        logger.info(
+            "Refreshed %s: %d entries (%d new, %d updated)",
+            title,
+            len(entries),
+            local_added,
+            local_updated,
+        )
     return podcasts_refreshed, episodes_added, episodes_updated, errors

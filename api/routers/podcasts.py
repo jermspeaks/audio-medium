@@ -1,9 +1,12 @@
 """Podcast API endpoints."""
 import hashlib
+import logging
 from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Query, HTTPException
+
+logger = logging.getLogger(__name__)
 
 from database import (
     get_all_podcasts,
@@ -114,14 +117,18 @@ def refresh_metadata():
         )
         rows = [dict(row) for row in cur.fetchall()]
     podcasts_refreshed = len(rows)
+    logger.info("Starting metadata refresh for %d podcasts", podcasts_refreshed)
     for row in rows:
         feed_url = (row.get("feed_url") or "").strip()
         if not feed_url:
             continue
+        title = (row.get("title") or "").strip() or row.get("uuid", "")
+        logger.info("Refreshing metadata: %s (%s)", title, feed_url)
         try:
             rss_meta = fetch_podcast_metadata(feed_url)
         except Exception as e:
             errors.append(f"{row.get('title') or row['uuid']}: {e}")
+            logger.warning("Metadata refresh failed for %s: %s", title, e)
             continue
         title = (rss_meta.get("title") or "").strip() or row.get("title")
         author = (rss_meta.get("author") or "").strip() or row.get("author")
@@ -139,6 +146,7 @@ def refresh_metadata():
             is_ended=is_ended,
         )
         podcasts_updated += 1
+        logger.info("Refreshed metadata: %s", title)
     return RefreshMetadataResponse(
         podcasts_refreshed=podcasts_refreshed,
         podcasts_updated=podcasts_updated,
