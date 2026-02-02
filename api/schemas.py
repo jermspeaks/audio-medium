@@ -11,6 +11,7 @@ class PodcastResponse(BaseModel):
     author: Optional[str] = None
     description: Optional[str] = None
     feed_url: Optional[str] = None
+    website_url: Optional[str] = None
     image_url: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None

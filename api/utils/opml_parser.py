@@ -20,7 +20,12 @@ def parse_opml(content: bytes | str) -> List[Dict[str, Any]]:
                 xml_url = child.get("xmlUrl") or child.get("xmlurl")
                 if xml_url and xml_url.strip():
                     title = (child.get("text") or child.get("title") or "").strip()
-                    entries.append({"feed_url": xml_url.strip(), "title": title or None})
+                    html_url = (child.get("htmlUrl") or child.get("htmlurl") or "").strip() or None
+                    entries.append({
+                        "feed_url": xml_url.strip(),
+                        "title": title or None,
+                        "website_url": html_url,
+                    })
             collect_outlines(child)
 
     collect_outlines(root)

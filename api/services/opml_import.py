@@ -71,7 +71,7 @@ def import_opml(content: bytes, db_path: Optional[Path] = None) -> OPMLImportRep
     with get_connection(db_path) as conn:
         # Build canonical feed_url -> podcast row (prefer row with higher episode_count)
         cur = conn.execute(
-            """SELECT p.uuid, p.title, p.author, p.description, p.feed_url, p.image_url,
+            """SELECT p.uuid, p.title, p.author, p.description, p.feed_url, p.website_url, p.image_url,
                       (SELECT COUNT(*) FROM episodes e WHERE e.podcast_uuid = p.uuid AND e.deleted_at IS NULL) AS episode_count
                FROM podcasts p
                WHERE p.deleted_at IS NULL AND TRIM(COALESCE(p.feed_url, '')) != ''"""
@@ -110,6 +110,7 @@ def import_opml(content: bytes, db_path: Optional[Path] = None) -> OPMLImportRep
                 final_author = existing.get("author") or author
                 final_description = existing.get("description") or description
                 final_image_url = existing.get("image_url") or image_url
+                final_website_url = existing.get("website_url") or entry.get("website_url")
                 enriched = (
                     (not existing.get("author") and author)
                     or (not existing.get("description") and description)
@@ -124,6 +125,7 @@ def import_opml(content: bytes, db_path: Optional[Path] = None) -> OPMLImportRep
                     author=final_author or existing.get("author"),
                     description=final_description or existing.get("description"),
                     feed_url=existing.get("feed_url") or feed_url,
+                    website_url=final_website_url or existing.get("website_url"),
                     image_url=final_image_url or existing.get("image_url"),
                     conn=conn,
                 )
@@ -142,6 +144,7 @@ def import_opml(content: bytes, db_path: Optional[Path] = None) -> OPMLImportRep
                     author=author,
                     description=description,
                     feed_url=feed_url,
+                    website_url=entry.get("website_url"),
                     image_url=image_url,
                     conn=conn,
                 )
@@ -153,6 +156,7 @@ def import_opml(content: bytes, db_path: Optional[Path] = None) -> OPMLImportRep
                     "author": author,
                     "description": description,
                     "feed_url": feed_url,
+                    "website_url": entry.get("website_url"),
                     "image_url": image_url,
                     "episode_count": 0,
                 }

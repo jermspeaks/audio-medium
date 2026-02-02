@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any, Union
 from contextlib import contextmanager
 
 # Schema version for migrations
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 CREATE_PODCASTS = """
 CREATE TABLE IF NOT EXISTS podcasts (
@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS podcasts (
     author TEXT,
     description TEXT,
     feed_url TEXT,
+    website_url TEXT,
     image_url TEXT,
     deleted_at TEXT,
     created_at TEXT NOT NULL,
@@ -162,6 +163,19 @@ def _migrate_schema(conn: sqlite3.Connection) -> None:
                 pass
         conn.execute(CREATE_SYNC_HISTORY)
 
+    # Migration to v3: add website_url to podcasts, backfill from feed_url
+    if current < 3:
+        try:
+            cur = conn.execute("PRAGMA table_info(podcasts)")
+            columns = [row[1] for row in cur.fetchall()]
+            if "website_url" not in columns:
+                conn.execute("ALTER TABLE podcasts ADD COLUMN website_url TEXT")
+                conn.execute(
+                    "UPDATE podcasts SET website_url = feed_url WHERE feed_url IS NOT NULL AND TRIM(feed_url) != ''"
+                )
+        except sqlite3.OperationalError:
+            pass
+
     conn.execute(
         "INSERT OR REPLACE INTO _schema_meta (key, value) VALUES (?, ?)",
         ("schema_version", str(SCHEMA_VERSION)),
@@ -192,6 +206,7 @@ def upsert_podcast(
     author: Optional[str] = None,
     description: Optional[str] = None,
     feed_url: Optional[str] = None,
+    website_url: Optional[str] = None,
     image_url: Optional[str] = None,
     deleted_at: Optional[str] = None,
     db_path: Optional[Path] = None,
@@ -202,36 +217,71 @@ def upsert_podcast(
     if conn is not None:
         conn.execute(
             """
-            INSERT INTO podcasts (uuid, title, author, description, feed_url, image_url, deleted_at, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO podcasts (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 title = COALESCE(excluded.title, title),
                 author = COALESCE(excluded.author, author),
                 description = COALESCE(excluded.description, description),
                 feed_url = COALESCE(excluded.feed_url, feed_url),
+                website_url = COALESCE(excluded.website_url, website_url),
                 image_url = COALESCE(excluded.image_url, image_url),
                 deleted_at = excluded.deleted_at,
                 updated_at = excluded.updated_at
             """,
-            (uuid, title, author, description, feed_url, image_url, deleted_at, now, now),
+            (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, now, now),
         )
         return
     with get_connection(db_path) as c:
         c.execute(
             """
-            INSERT INTO podcasts (uuid, title, author, description, feed_url, image_url, deleted_at, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO podcasts (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(uuid) DO UPDATE SET
                 title = COALESCE(excluded.title, title),
                 author = COALESCE(excluded.author, author),
                 description = COALESCE(excluded.description, description),
                 feed_url = COALESCE(excluded.feed_url, feed_url),
+                website_url = COALESCE(excluded.website_url, website_url),
                 image_url = COALESCE(excluded.image_url, image_url),
                 deleted_at = excluded.deleted_at,
                 updated_at = excluded.updated_at
             """,
-            (uuid, title, author, description, feed_url, image_url, deleted_at, now, now),
+            (uuid, title, author, description, feed_url, website_url, image_url, deleted_at, now, now),
         )
+
+
+def update_podcast_feed_url(
+    uuid: str,
+    feed_url: str,
+    website_url: Optional[str] = None,
+    db_path: Optional[Path] = None,
+    conn: Optional[sqlite3.Connection] = None,
+) -> None:
+    """Update only feed_url (and optionally website_url) for a podcast by uuid."""
+    if conn is not None:
+        if website_url is not None:
+            conn.execute(
+                "UPDATE podcasts SET feed_url = ?, website_url = ?, updated_at = ? WHERE uuid = ?",
+                (feed_url, website_url, _iso_now(), uuid),
+            )
+        else:
+            conn.execute(
+                "UPDATE podcasts SET feed_url = ?, updated_at = ? WHERE uuid = ?",
+                (feed_url, _iso_now(), uuid),
+            )
+        return
+    with get_connection(db_path) as c:
+        if website_url is not None:
+            c.execute(
+                "UPDATE podcasts SET feed_url = ?, website_url = ?, updated_at = ? WHERE uuid = ?",
+                (feed_url, website_url, _iso_now(), uuid),
+            )
+        else:
+            c.execute(
+                "UPDATE podcasts SET feed_url = ?, updated_at = ? WHERE uuid = ?",
+                (feed_url, _iso_now(), uuid),
+            )
 
 
 def delete_podcast(
@@ -435,9 +485,11 @@ def get_episodes_by_podcast(
     """List episodes for a podcast, optionally filtered by playing_status (1=not played, 2=in progress, 3=completed, 'played'=2 or 3)."""
     with get_connection(db_path) as conn:
         sql = """
-            SELECT e.*, lh.played_up_to, lh.playing_status, lh.completion_percentage,
+            SELECT e.*, p.title AS podcast_title, p.author AS podcast_author, p.image_url AS podcast_image_url,
+                   lh.played_up_to, lh.playing_status, lh.completion_percentage,
                    lh.first_played_at, lh.last_played_at, lh.play_count
             FROM episodes e
+            LEFT JOIN podcasts p ON p.uuid = e.podcast_uuid
             LEFT JOIN listening_history lh ON lh.episode_uuid = e.uuid
             WHERE e.podcast_uuid = ?
         """
@@ -544,7 +596,7 @@ def search_episodes(
     with get_connection(db_path) as conn:
         term = f"%{q}%"
         sql = """
-            SELECT e.*, p.title AS podcast_title, lh.played_up_to, lh.playing_status,
+            SELECT e.*, p.title AS podcast_title, p.image_url AS podcast_image_url, lh.played_up_to, lh.playing_status,
                    lh.completion_percentage, lh.last_played_at
             FROM episodes e
             LEFT JOIN podcasts p ON p.uuid = e.podcast_uuid
@@ -580,7 +632,7 @@ def get_episodes_list(
     """List episodes with optional filters for API list endpoint. playing_status: 1=not played, 2=in progress, 3=completed, 'played'=2 or 3."""
     with get_connection(db_path) as conn:
         sql = """
-            SELECT e.*, p.title AS podcast_title, p.author AS podcast_author,
+            SELECT e.*, p.title AS podcast_title, p.author AS podcast_author, p.image_url AS podcast_image_url,
                    lh.played_up_to, lh.playing_status, lh.completion_percentage,
                    lh.first_played_at, lh.last_played_at, lh.play_count
             FROM episodes e

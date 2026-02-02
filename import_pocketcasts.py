@@ -167,6 +167,7 @@ def import_from_pocketcasts_db(
                 author=row["author"],
                 description=row["podcastDescription"],
                 feed_url=row["podcastUrl"],
+                website_url=row["podcastUrl"],
                 image_url=row["imageURL"] or row["thumbnailURL"],
                 deleted_at=deleted_at,
                 conn=conn,
