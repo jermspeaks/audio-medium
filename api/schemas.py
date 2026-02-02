@@ -98,3 +98,57 @@ class TopPodcastResponse(BaseModel):
 class SearchResultResponse(BaseModel):
     podcasts: List[PodcastResponse]
     episodes: List[EpisodeResponse]
+
+
+class SyncReportResponse(BaseModel):
+    """Response after a sync run."""
+    sync_timestamp: str
+    source_path: Optional[str] = None
+    podcasts_added: int = 0
+    podcasts_updated: int = 0
+    podcasts_deleted: int = 0
+    episodes_added: int = 0
+    episodes_updated: int = 0
+    episodes_deleted: int = 0
+    conflicts_count: int = 0
+
+
+class SyncStatusResponse(BaseModel):
+    """Last sync timestamp and optional latest report summary."""
+    last_sync_timestamp: Optional[str] = None
+    last_sync_source_path: Optional[str] = None
+    last_sync_podcasts_added: Optional[int] = None
+    last_sync_episodes_added: Optional[int] = None
+
+
+class SyncHistoryEntryResponse(BaseModel):
+    """Single sync history record."""
+    id: Optional[int] = None
+    sync_timestamp: str
+    source_path: Optional[str] = None
+    podcasts_added: int = 0
+    podcasts_updated: int = 0
+    podcasts_deleted: int = 0
+    episodes_added: int = 0
+    episodes_updated: int = 0
+    episodes_deleted: int = 0
+    conflicts_count: int = 0
+    created_at: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OPMLImportResponse(BaseModel):
+    """Response after OPML import."""
+    podcasts_found: int = 0
+    podcasts_added: int = 0
+    podcasts_updated: int = 0
+    metadata_enriched: int = 0
+    errors: List[str] = []
+
+
+class RemoveDuplicatesResponse(BaseModel):
+    """Response after removing duplicate podcasts."""
+    deleted_count: int = 0
+    deleted_titles: List[str] = []

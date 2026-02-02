@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import podcasts, episodes, stats, sync
+from api.routers import podcasts, episodes, stats, sync, settings
 from api.routers.search import router as search_router
 
 app = FastAPI(
@@ -23,6 +23,7 @@ app.include_router(podcasts.router, prefix="/api/podcasts", tags=["podcasts"])
 app.include_router(episodes.router, prefix="/api/episodes", tags=["episodes"])
 app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
 app.include_router(sync.router, prefix="/api", tags=["sync"])
+app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 app.include_router(search_router, prefix="/api", tags=["search"])
 
 

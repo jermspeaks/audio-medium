@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { importOPML } from '../api/settings';
+import { importOPML, removeDuplicatePodcasts } from '../api/settings';
 import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
 
@@ -8,6 +8,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [report, setReport] = useState(null);
+  const [dupLoading, setDupLoading] = useState(false);
+  const [dupError, setDupError] = useState(null);
+  const [dupResult, setDupResult] = useState(null);
 
   const handleFileChange = (e) => {
     const chosen = e.target.files?.[0];
@@ -33,9 +36,53 @@ export default function SettingsPage() {
     }
   };
 
+  const handleRemoveDuplicates = async () => {
+    setDupLoading(true);
+    setDupError(null);
+    setDupResult(null);
+    try {
+      const data = await removeDuplicatePodcasts();
+      setDupResult(data);
+    } catch (e) {
+      const d = e.response?.data?.detail;
+      setDupError(Array.isArray(d) ? d.map((x) => x.msg || JSON.stringify(x)).join('; ') : (d || e.message || 'Remove duplicates failed'));
+    } finally {
+      setDupLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Settings</h1>
+
+      <section className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Duplicate podcasts</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+          Remove duplicate podcast entries (keeps the one with episodes for each feed, deletes the one with 0 episodes).
+        </p>
+        <button
+          type="button"
+          onClick={handleRemoveDuplicates}
+          disabled={dupLoading}
+          className="rounded-md bg-slate-800 dark:bg-slate-200 px-4 py-2 text-sm font-medium text-white dark:text-slate-900 shadow hover:bg-slate-700 dark:hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {dupLoading ? 'Removing…' : 'Remove duplicate podcasts'}
+        </button>
+        {dupError && <div className="mt-2"><ErrorState message={dupError} /></div>}
+        {dupResult && !dupLoading && (
+          <div className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+            Removed <strong className="text-slate-900 dark:text-slate-100">{dupResult.deleted_count}</strong> duplicate podcast(s).
+            {dupResult.deleted_titles?.length > 0 && (
+              <ul className="mt-2 list-disc list-inside">
+                {dupResult.deleted_titles.slice(0, 20).map((title, i) => (
+                  <li key={i}>{title}</li>
+                ))}
+                {dupResult.deleted_titles.length > 20 && <li>… and {dupResult.deleted_titles.length - 20} more</li>}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
 
       <section className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Import OPML</h2>

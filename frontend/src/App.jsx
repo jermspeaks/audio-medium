@@ -6,6 +6,7 @@ import PodcastDetailPage from './pages/PodcastDetailPage';
 import EpisodesPage from './pages/EpisodesPage';
 import EpisodeDetailPage from './pages/EpisodeDetailPage';
 import SearchPage from './pages/SearchPage';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="episodes" element={<EpisodesPage />} />
           <Route path="episodes/:uuid" element={<EpisodeDetailPage />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
