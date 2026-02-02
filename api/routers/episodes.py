@@ -1,9 +1,16 @@
 """Episode API endpoints."""
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Query, HTTPException
 
-from database import get_episodes_list, get_episode_by_uuid, get_listening_history_by_episode, get_play_sessions_by_episode
-from api.schemas import EpisodeResponse, ListeningHistoryResponse, PlaySessionResponse
+from database import (
+    get_episodes_list,
+    get_episode_by_uuid,
+    get_listening_history_by_episode,
+    get_play_sessions_by_episode,
+    upsert_listening_history,
+)
+from api.schemas import EpisodeResponse, ListeningHistoryResponse, ListeningHistoryUpdateRequest, PlaySessionResponse
 
 router = APIRouter()
 
@@ -37,6 +44,33 @@ def get_episode_history(uuid: str):
     row = get_listening_history_by_episode(uuid)
     if not row:
         raise HTTPException(status_code=404, detail="Listening history not found for this episode")
+    return ListeningHistoryResponse(**dict(row))
+
+
+@router.put("/{uuid}/history", response_model=ListeningHistoryResponse)
+def update_episode_history(uuid: str, body: ListeningHistoryUpdateRequest):
+    """Update listening history for an episode (e.g. playback position, playing status)."""
+    episode = get_episode_by_uuid(uuid)
+    if not episode:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    existing = get_listening_history_by_episode(uuid)
+    now = datetime.utcnow().isoformat() + "Z"
+    played_up_to = body.played_up_to if body.played_up_to is not None else (existing["played_up_to"] if existing else 0)
+    duration = body.duration if body.duration is not None else (existing.get("duration") or episode.get("duration") or 0)
+    playing_status = body.playing_status if body.playing_status is not None else (existing["playing_status"] if existing else 0)
+    first_played_at = existing["first_played_at"] if existing else now
+    last_played_at = now
+    play_count = existing["play_count"] if existing else 1
+    upsert_listening_history(
+        episode_uuid=uuid,
+        played_up_to=played_up_to,
+        duration=duration,
+        playing_status=playing_status,
+        first_played_at=first_played_at,
+        last_played_at=last_played_at,
+        play_count=play_count,
+    )
+    row = get_listening_history_by_episode(uuid)
     return ListeningHistoryResponse(**dict(row))
 
 

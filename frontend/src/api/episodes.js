@@ -15,6 +15,11 @@ export async function getEpisodeHistory(uuid) {
   return data;
 }
 
+export async function updateEpisodeHistory(uuid, data) {
+  const { data: result } = await api.put(`/episodes/${uuid}/history`, data);
+  return result;
+}
+
 export async function getEpisodeSessions(uuid, params = {}) {
   const { data } = await api.get(`/episodes/${uuid}/sessions`, { params });
   return data;

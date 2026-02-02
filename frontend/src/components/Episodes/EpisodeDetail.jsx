@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import AudioPlayer from './AudioPlayer';
 
 const STATUS_LABELS = { 1: 'Not played', 2: 'In progress', 3: 'Completed' };
 
@@ -15,7 +16,7 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString();
 }
 
-export default function EpisodeDetail({ episode, history, sessions }) {
+export default function EpisodeDetail({ episode, history, sessions, onHistoryUpdated }) {
   const title = episode?.title || episode?.uuid;
   const statusLabel = episode ? (STATUS_LABELS[episode.playing_status] ?? '—') : '—';
   return (
@@ -89,6 +90,14 @@ export default function EpisodeDetail({ episode, history, sessions }) {
           </div>
         </div>
       </div>
+
+      {episode?.file_url && (
+        <AudioPlayer
+          episode={episode}
+          history={history}
+          onHistoryUpdated={onHistoryUpdated}
+        />
+      )}
 
       {history && (
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">

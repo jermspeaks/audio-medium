@@ -49,6 +49,13 @@ class EpisodeResponse(BaseModel):
         from_attributes = True
 
 
+class ListeningHistoryUpdateRequest(BaseModel):
+    """Request body for updating listening history."""
+    played_up_to: Optional[float] = None
+    duration: Optional[float] = None
+    playing_status: Optional[int] = None
+
+
 class ListeningHistoryResponse(BaseModel):
     id: Optional[int] = None
     episode_uuid: str
