@@ -2,10 +2,54 @@
 from typing import Optional
 from fastapi import APIRouter, Query, HTTPException
 
-from database import get_all_podcasts, get_podcast_by_uuid, get_episodes_by_podcast
-from api.schemas import PodcastResponse, EpisodeResponse
+from database import get_all_podcasts, get_podcast_by_uuid, get_episodes_by_podcast, get_connection, upsert_podcast
+from api.schemas import PodcastResponse, EpisodeResponse, RefreshMetadataResponse
+from api.utils.rss_fetcher import fetch_podcast_metadata
 
 router = APIRouter()
+
+
+@router.post("/refresh-metadata", response_model=RefreshMetadataResponse)
+def refresh_metadata():
+    """Refresh metadata (title, author, description, image_url) from RSS for all podcasts with feed URLs."""
+    errors: list[str] = []
+    podcasts_updated = 0
+    with get_connection() as conn:
+        cur = conn.execute(
+            """SELECT uuid, title, author, description, feed_url, website_url, image_url
+               FROM podcasts
+               WHERE deleted_at IS NULL AND feed_url IS NOT NULL AND TRIM(feed_url) != ''"""
+        )
+        rows = [dict(row) for row in cur.fetchall()]
+    podcasts_refreshed = len(rows)
+    for row in rows:
+        feed_url = (row.get("feed_url") or "").strip()
+        if not feed_url:
+            continue
+        try:
+            rss_meta = fetch_podcast_metadata(feed_url)
+        except Exception as e:
+            errors.append(f"{row.get('title') or row['uuid']}: {e}")
+            continue
+        title = (rss_meta.get("title") or "").strip() or row.get("title")
+        author = (rss_meta.get("author") or "").strip() or row.get("author")
+        description = (rss_meta.get("description") or "").strip() or row.get("description")
+        image_url = (rss_meta.get("image_url") or "").strip() or row.get("image_url")
+        upsert_podcast(
+            uuid=row["uuid"],
+            title=title,
+            author=author,
+            description=description,
+            feed_url=row.get("feed_url"),
+            website_url=row.get("website_url"),
+            image_url=image_url,
+        )
+        podcasts_updated += 1
+    return RefreshMetadataResponse(
+        podcasts_refreshed=podcasts_refreshed,
+        podcasts_updated=podcasts_updated,
+        errors=errors,
+    )
 
 
 @router.get("", response_model=list[PodcastResponse])

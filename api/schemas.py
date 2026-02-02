@@ -149,6 +149,13 @@ class OPMLImportResponse(BaseModel):
     errors: List[str] = []
 
 
+class RefreshMetadataResponse(BaseModel):
+    """Response after refreshing podcast metadata from RSS."""
+    podcasts_refreshed: int = 0
+    podcasts_updated: int = 0
+    errors: List[str] = []
+
+
 class RemoveDuplicatesResponse(BaseModel):
     """Response after removing duplicate podcasts."""
     deleted_count: int = 0
