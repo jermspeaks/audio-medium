@@ -5,59 +5,55 @@ body {
   min-height: 100vh;
 }
 
-/* react-h5-audio-player dark mode overrides (when .dark is on an ancestor) */
+/* react-h5-audio-player dark mode – !important so overrides load after library CSS */
+@media (prefers-color-scheme: dark) {
+  .rhap_container {
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+  .rhap_time { color: rgb(203 213 225) !important; }
+  .rhap_progress-bar,
+  .rhap_progress-bar-show-download { background-color: rgb(71 85 105) !important; }
+  .rhap_progress-bar-show-download { background-color: rgba(71, 85, 105, 0.5) !important; }
+  .rhap_progress-filled { background-color: rgb(148 163 184) !important; }
+  .rhap_download-progress { background-color: rgb(71 85 105) !important; }
+  .rhap_progress-indicator {
+    background: rgb(148 163 184) !important;
+    box-shadow: rgba(148, 163, 184, 0.5) 0 0 5px !important;
+  }
+  .rhap_repeat-button,
+  .rhap_main-controls-button,
+  .rhap_volume-button { color: rgb(226 232 240) !important; }
+  .rhap_repeat-button:hover,
+  .rhap_main-controls-button:hover,
+  .rhap_volume-button:hover { color: rgb(248 250 252) !important; }
+  .rhap_volume-bar { background: rgb(71 85 105) !important; }
+  .rhap_volume-indicator,
+  .rhap_volume-filled { background-color: rgb(148 163 184) !important; }
+  .rhap_volume-indicator:hover { opacity: 1 !important; }
+}
+
 .dark .rhap_container {
-  background-color: transparent;
-  box-shadow: none;
+  background-color: transparent !important;
+  box-shadow: none !important;
 }
-
-.dark .rhap_time {
-  color: rgb(203 213 225); /* slate-300 */
-}
-
+.dark .rhap_time { color: rgb(203 213 225) !important; }
 .dark .rhap_progress-bar,
-.dark .rhap_progress-bar-show-download {
-  background-color: rgb(71 85 105); /* slate-600 */
-}
-
-.dark .rhap_progress-bar-show-download {
-  background-color: rgba(71, 85, 105, 0.5);
-}
-
-.dark .rhap_progress-filled {
-  background-color: rgb(148 163 184); /* slate-400 */
-}
-
-.dark .rhap_download-progress {
-  background-color: rgb(71 85 105);
-}
-
+.dark .rhap_progress-bar-show-download { background-color: rgb(71 85 105) !important; }
+.dark .rhap_progress-bar-show-download { background-color: rgba(71, 85, 105, 0.5) !important; }
+.dark .rhap_progress-filled { background-color: rgb(148 163 184) !important; }
+.dark .rhap_download-progress { background-color: rgb(71 85 105) !important; }
 .dark .rhap_progress-indicator {
-  background: rgb(148 163 184);
-  box-shadow: rgba(148, 163, 184, 0.5) 0 0 5px;
+  background: rgb(148 163 184) !important;
+  box-shadow: rgba(148, 163, 184, 0.5) 0 0 5px !important;
 }
-
 .dark .rhap_repeat-button,
 .dark .rhap_main-controls-button,
-.dark .rhap_volume-button {
-  color: rgb(226 232 240); /* slate-200 */
-}
-
+.dark .rhap_volume-button { color: rgb(226 232 240) !important; }
 .dark .rhap_repeat-button:hover,
 .dark .rhap_main-controls-button:hover,
-.dark .rhap_volume-button:hover {
-  color: rgb(248 250 252); /* slate-50 */
-}
-
-.dark .rhap_volume-bar {
-  background: rgb(71 85 105);
-}
-
+.dark .rhap_volume-button:hover { color: rgb(248 250 252) !important; }
+.dark .rhap_volume-bar { background: rgb(71 85 105) !important; }
 .dark .rhap_volume-indicator,
-.dark .rhap_volume-filled {
-  background-color: rgb(148 163 184);
-}
-
-.dark .rhap_volume-indicator:hover {
-  opacity: 1;
-}
+.dark .rhap_volume-filled { background-color: rgb(148 163 184) !important; }
+.dark .rhap_volume-indicator:hover { opacity: 1 !important; }
