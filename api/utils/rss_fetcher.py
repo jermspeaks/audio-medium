@@ -2,7 +2,7 @@
 import feedparser
 from typing import Any, Dict, Optional
 
-# Timeout in seconds for fetching feeds
+# Timeout in seconds for fetching feeds (used when feedparser supports it)
 RSS_FETCH_TIMEOUT = 15
 
 
@@ -22,7 +22,6 @@ def fetch_podcast_metadata(feed_url: str) -> Dict[str, Any]:
         parsed = feedparser.parse(
             feed_url,
             request_headers={"User-Agent": "PodcastsReviewer/1.0"},
-            timeout=RSS_FETCH_TIMEOUT,
         )
     except Exception:
         return result
@@ -72,18 +71,48 @@ def _get_author(feed: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _extract_href(obj: Any) -> Optional[str]:
+    """Get URL from feedparser image object (dict with 'href' or object with .href attribute)."""
+    if obj is None:
+        return None
+    if isinstance(obj, str) and obj.strip().startswith("http"):
+        return obj.strip()
+    href = None
+    if isinstance(obj, dict):
+        href = obj.get("href")
+    else:
+        href = getattr(obj, "href", None)
+    if href and isinstance(href, str):
+        return href.strip()
+    return None
+
+
 def _get_image_url(feed: Dict[str, Any]) -> Optional[str]:
-    """Extract podcast image URL from feed (image.href, itunes_image, etc.)."""
-    image = feed.get("image")
-    if image:
-        if isinstance(image, dict) and image.get("href"):
-            return image["href"].strip()
-        if isinstance(image, str) and image.strip().startswith("http"):
-            return image.strip()
-    itunes_image = feed.get("itunes_image")
-    if itunes_image:
-        if isinstance(itunes_image, dict) and itunes_image.get("href"):
-            return itunes_image["href"].strip()
-        if isinstance(itunes_image, str) and itunes_image.strip().startswith("http"):
-            return itunes_image.strip()
+    """Extract podcast image URL from feed (image.href, itunes_image, logo, etc.)."""
+    def get_obj(key: str) -> Any:
+        """Prefer attribute access (feedparser often exposes feed.image, feed.itunes_image)."""
+        obj = getattr(feed, key, None)
+        if obj is None and hasattr(feed, "get"):
+            obj = feed.get(key)
+        return obj
+
+    for key in ("image", "itunes_image", "logo"):
+        obj = get_obj(key)
+        url = _extract_href(obj)
+        if url:
+            return url
+    # Fallback: scan feed for any key containing 'image' or 'logo' (namespaced keys)
+    try:
+        keys_iter = getattr(feed, "keys", None)
+        if callable(keys_iter):
+            for k in keys_iter():
+                if k and ("image" in k.lower() or "logo" in k.lower()):
+                    v = feed.get(k) if hasattr(feed, "get") else None
+                    if v is None:
+                        v = getattr(feed, k, None)
+                    url = _extract_href(v)
+                    if url:
+                        return url
+    except Exception:
+        pass
     return None

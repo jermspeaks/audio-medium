@@ -1,5 +1,6 @@
 """Podcast API endpoints."""
 from typing import Optional
+
 from fastapi import APIRouter, Query, HTTPException
 
 from database import get_all_podcasts, get_podcast_by_uuid, get_episodes_by_podcast, get_connection, upsert_podcast
