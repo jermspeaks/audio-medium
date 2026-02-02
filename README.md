@@ -75,6 +75,20 @@ from listening_stats import (
 python3 import_pocketcasts.py
 ```
 
+### Enrich feed URLs from OPML
+
+After importing from Pocket Casts, podcast URLs in the DB are website URLs. To set **RSS feed URLs** from an OPML file (e.g. a Pocket Casts OPML export), run:
+
+```bash
+# Uses PocketCasts.opml in project root by default
+python3 enrich_feeds_from_opml.py
+
+# Or pass an OPML file path
+python3 enrich_feeds_from_opml.py path/to/your.opml
+```
+
+The script matches OPML entries to DB podcasts by **title** (normalized) and updates `feed_url` from the OPML’s `xmlUrl`. It reports how many were updated and lists any unmatched or ambiguous titles.
+
 ## Legacy: JSON and Flat SQLite (extract_pocketcasts.py)
 
 The original script still works for one-off JSON or a single flat table:
@@ -150,6 +164,7 @@ The **Sync** page at `/sync` lets you:
 - `database.py` – SQLite schema and query helpers
 - `listening_stats.py` – Analytics used by CLI and API
 - `import_pocketcasts.py` – Import from Pocket Casts export
+- `enrich_feeds_from_opml.py` – Set podcast feed URLs from an OPML file (match by title)
 - `config.py` – DB path (`PODCASTS_DB_PATH`)
 
 ## Requirements
