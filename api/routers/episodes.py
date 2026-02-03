@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query, HTTPException
 
 from database import (
     get_episodes_list,
+    get_episodes_list_count,
     get_episode_by_uuid,
     get_listening_history_by_episode,
     get_play_sessions_by_episode,
@@ -15,18 +16,22 @@ from api.schemas import EpisodeResponse, ListeningHistoryResponse, ListeningHist
 router = APIRouter()
 
 
-@router.get("", response_model=list[EpisodeResponse])
+@router.get("")
 def list_episodes(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     podcast_uuid: Optional[str] = Query(None),
     playing_status: Optional[str] = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
 ):
-    """List episodes with optional filters."""
+    """List episodes with optional filters. Returns { items, total }."""
     rows = get_episodes_list(
         limit=limit, offset=offset, podcast_uuid=podcast_uuid, playing_status=playing_status
     )
-    return [EpisodeResponse(**dict(row)) for row in rows]
+    total = get_episodes_list_count(
+        podcast_uuid=podcast_uuid, playing_status=playing_status
+    )
+    items = [EpisodeResponse(**dict(row)) for row in rows]
+    return {"items": items, "total": total}
 
 
 @router.get("/{uuid}", response_model=EpisodeResponse)

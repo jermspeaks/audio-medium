@@ -2,7 +2,7 @@ import api from './api';
 
 export async function getEpisodes(params = {}) {
   const { data } = await api.get('/episodes', { params });
-  return data;
+  return data?.items != null ? data : { items: Array.isArray(data) ? data : [], total: 0 };
 }
 
 export async function getEpisode(uuid) {

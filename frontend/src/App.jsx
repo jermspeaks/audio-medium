@@ -11,6 +11,7 @@ import SubscribePage from './pages/SubscribePage';
 import EditPodcastPage from './pages/EditPodcastPage';
 import SyncPage from './pages/SyncPage';
 import SettingsPage from './pages/SettingsPage';
+import ColophonPage from './pages/ColophonPage';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="stats" element={<StatsPage />} />
             <Route path="sync" element={<SyncPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="colophon" element={<ColophonPage />} />
           </Route>
         </Route>
       </Routes>

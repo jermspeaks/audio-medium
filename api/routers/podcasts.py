@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 from database import (
     get_all_podcasts,
+    get_all_podcasts_count,
     get_podcast_by_uuid,
     get_podcast_by_feed_url,
     get_episodes_by_podcast,
@@ -154,15 +155,17 @@ def refresh_metadata():
     )
 
 
-@router.get("", response_model=list[PodcastResponse])
+@router.get("")
 def list_podcasts(
     search: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
-    """List all podcasts with optional search and pagination."""
+    """List all podcasts with optional search and pagination. Returns { items, total }."""
     rows = get_all_podcasts(search=search, limit=limit, offset=offset)
-    return [PodcastResponse(**dict(row)) for row in rows]
+    total = get_all_podcasts_count(search=search)
+    items = [PodcastResponse(**dict(row)) for row in rows]
+    return {"items": items, "total": total}
 
 
 @router.get("/{uuid}", response_model=PodcastResponse)

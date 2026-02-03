@@ -27,11 +27,11 @@ export default function PodcastDetail({ podcast, episodes }) {
   return (
     <div className="space-y-6">
       {archiveError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
           {archiveError}
         </div>
       )}
-      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+      <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex gap-6">
           {podcast?.image_url ? (
             <img
@@ -40,23 +40,23 @@ export default function PodcastDetail({ podcast, episodes }) {
               className="w-24 h-24 rounded-xl object-cover shrink-0"
             />
           ) : (
-            <div className="w-24 h-24 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center text-4xl">
+            <div className="w-24 h-24 rounded-xl bg-muted shrink-0 flex items-center justify-center text-4xl text-muted-foreground">
               🎙
             </div>
           )}
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{title}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{title}</h1>
               {podcast?.is_ended && (
-                <span className="rounded px-2 py-0.5 text-xs font-medium bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300">
+                <span className="rounded px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
                   Ended
                 </span>
               )}
             </div>
             {podcast?.author && (
-              <p className="text-slate-600 dark:text-slate-300 mt-1">{podcast.author}</p>
+              <p className="text-muted-foreground mt-1">{podcast.author}</p>
             )}
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               {podcast?.episode_count ?? 0} episodes in history
             </p>
             <p className="mt-2 flex flex-wrap gap-4 items-center">
@@ -64,7 +64,7 @@ export default function PodcastDetail({ podcast, episodes }) {
                 <>
                   <Link
                     to={`/podcasts/${podcast.uuid}/edit`}
-                    className="text-sm text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
+                    className="text-sm text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1"
                   >
                     Edit
                   </Link>
@@ -83,10 +83,10 @@ export default function PodcastDetail({ podcast, episodes }) {
                   href={podcast.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
+                  className="text-sm text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1"
                 >
                   Website
-                  <span aria-hidden className="text-slate-400">↗</span>
+                  <span aria-hidden className="opacity-70">↗</span>
                 </a>
               )}
               {podcast?.feed_url && (
@@ -94,15 +94,15 @@ export default function PodcastDetail({ podcast, episodes }) {
                   href={podcast.feed_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-slate-600 dark:text-slate-300 hover:underline inline-flex items-center gap-1"
+                  className="text-sm text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1"
                 >
                   RSS Feed
-                  <span aria-hidden className="text-slate-400">↗</span>
+                  <span aria-hidden className="opacity-70">↗</span>
                 </a>
               )}
             </p>
             {podcast?.description && (
-              <p className="mt-3 text-slate-600 dark:text-slate-300 text-sm line-clamp-3">
+              <p className="mt-3 text-muted-foreground text-sm line-clamp-3">
                 {podcast.description}
               </p>
             )}
@@ -110,9 +110,9 @@ export default function PodcastDetail({ podcast, episodes }) {
         </div>
       </div>
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Episodes</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Episodes</h2>
         {!episodes?.length ? (
-          <p className="text-slate-500 dark:text-slate-400">No episodes.</p>
+          <p className="text-muted-foreground">No episodes.</p>
         ) : (
           <div className="space-y-3">
             {episodes.map((ep) => (

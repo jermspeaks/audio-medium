@@ -45,11 +45,11 @@ export default function SearchPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Search</h1>
+      <h1 className="text-2xl font-bold text-foreground">Search</h1>
       <SearchBar initialQuery={q} placeholder="Search podcasts and episodes..." />
       {q.trim() && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-500 dark:text-slate-400">Filter episodes by status:</span>
+          <span className="text-sm text-muted-foreground">Filter episodes by status:</span>
           <StatusFilter value={playingStatus} onChange={setPlayingStatus} />
         </div>
       )}

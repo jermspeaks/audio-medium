@@ -7,7 +7,7 @@ export default function SearchResults({ podcasts = [], episodes = [] }) {
     <div className="space-y-8">
       {podcasts.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Podcasts
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -19,7 +19,7 @@ export default function SearchResults({ podcasts = [], episodes = [] }) {
       )}
       {episodes.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Episodes
           </h2>
           <div className="space-y-3">
@@ -30,7 +30,7 @@ export default function SearchResults({ podcasts = [], episodes = [] }) {
         </section>
       )}
       {podcasts.length === 0 && episodes.length === 0 && (
-        <p className="text-slate-500 dark:text-slate-400 py-8 text-center">
+        <p className="text-muted-foreground py-8 text-center">
           No results found.
         </p>
       )}

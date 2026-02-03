@@ -484,6 +484,26 @@ def get_all_podcasts(
         return [dict(row) for row in cur.fetchall()]
 
 
+def get_all_podcasts_count(
+    db_path: Optional[Path] = None,
+    search: Optional[str] = None,
+    include_deleted: bool = False,
+) -> int:
+    """Count podcasts with same filters as get_all_podcasts (no limit/offset)."""
+    with get_connection(db_path) as conn:
+        sql = "SELECT COUNT(*) AS n FROM podcasts p WHERE 1=1"
+        params: list = []
+        if not include_deleted:
+            sql += " AND p.deleted_at IS NULL"
+        if search:
+            sql += " AND (p.title LIKE ? OR p.author LIKE ?)"
+            term = f"%{search}%"
+            params.extend([term, term])
+        cur = conn.execute(sql, params)
+        row = cur.fetchone()
+        return row["n"] if row else 0
+
+
 def get_podcast_by_uuid(uuid: str, db_path: Optional[Path] = None, include_deleted: bool = False) -> Optional[Dict[str, Any]]:
     """Get single podcast by uuid with episode count."""
     with get_connection(db_path) as conn:
@@ -705,6 +725,36 @@ def get_episodes_list(
         params.extend([limit, offset])
         cur = conn.execute(sql, params)
         return [dict(row) for row in cur.fetchall()]
+
+
+def get_episodes_list_count(
+    db_path: Optional[Path] = None,
+    podcast_uuid: Optional[str] = None,
+    playing_status: Optional[Union[int, str]] = None,
+    include_deleted: bool = False,
+) -> int:
+    """Count episodes with same filters as get_episodes_list (no limit/offset)."""
+    with get_connection(db_path) as conn:
+        sql = """
+            SELECT COUNT(*) AS n FROM episodes e
+            LEFT JOIN listening_history lh ON lh.episode_uuid = e.uuid
+            WHERE 1=1
+        """
+        params: list = []
+        if not include_deleted:
+            sql += " AND e.deleted_at IS NULL"
+        if podcast_uuid:
+            sql += " AND e.podcast_uuid = ?"
+            params.append(podcast_uuid)
+        if playing_status is not None:
+            if playing_status == "played":
+                sql += " AND lh.playing_status IN (2, 3)"
+            else:
+                sql += " AND lh.playing_status = ?"
+                params.append(playing_status)
+        cur = conn.execute(sql, params)
+        row = cur.fetchone()
+        return row["n"] if row else 0
 
 
 def get_last_sync_timestamp(

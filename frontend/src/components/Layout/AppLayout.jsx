@@ -1,45 +1,57 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-      <header className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
-            <Link to="/feed" className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+            <Link to="/feed" className="text-xl font-semibold text-foreground">
               Audiophile
             </Link>
             <nav className="flex gap-6">
-              <Link
+              <NavLink
                 to="/feed"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                end
+                className={({ isActive }) =>
+                  `transition-colors ${isActive ? 'font-semibold text-foreground underline underline-offset-4' : 'text-muted-foreground hover:text-foreground'}`
+                }
               >
                 Feed
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/podcasts"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                end
+                className={({ isActive }) =>
+                  `transition-colors ${isActive ? 'font-semibold text-foreground underline underline-offset-4' : 'text-muted-foreground hover:text-foreground'}`
+                }
               >
                 Podcasts
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/podcasts/subscribe"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                className={({ isActive }) =>
+                  `transition-colors ${isActive ? 'font-semibold text-foreground underline underline-offset-4' : 'text-muted-foreground hover:text-foreground'}`
+                }
               >
                 Subscribe
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/search"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                className={({ isActive }) =>
+                  `transition-colors ${isActive ? 'font-semibold text-foreground underline underline-offset-4' : 'text-muted-foreground hover:text-foreground'}`
+                }
               >
                 Search
-              </Link>
-              <Link
+              </NavLink>
+              <NavLink
                 to="/system"
-                className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                className={({ isActive }) =>
+                  `transition-colors ${isActive ? 'font-semibold text-foreground underline underline-offset-4' : 'text-muted-foreground hover:text-foreground'}`
+                }
               >
                 System
-              </Link>
+              </NavLink>
             </nav>
           </div>
         </div>
@@ -47,7 +59,7 @@ export default function AppLayout() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>
-      <footer className="border-t border-slate-200 dark:border-slate-700 mt-auto py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+      <footer className="border-t border-border mt-auto py-4 text-center text-sm text-muted-foreground">
         Audiophile © 2026
       </footer>
     </div>

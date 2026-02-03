@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getEpisodes } from '../api/episodes';
 import { refreshFeeds } from '../api/podcasts';
 import EpisodeList from '../components/Episodes/EpisodeList';
@@ -6,18 +7,44 @@ import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
 import Pagination from '../components/Common/Pagination';
 import StatusFilter from '../components/Filters/StatusFilter';
+import { Button } from '@/components/ui/button';
 
 const LIMIT = 50;
 
 export default function FeedPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page1 = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
+  const page0 = page1 - 1;
+  const playingStatus = searchParams.get('status') ?? '';
+
   const [episodes, setEpisodes] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
-  const [playingStatus, setPlayingStatus] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshReport, setRefreshReport] = useState(null);
   const [refreshError, setRefreshError] = useState(null);
+
+  const setPage = (updater) => {
+    const next = typeof updater === 'function' ? updater(page0) : updater;
+    const next1 = Math.max(1, next + 1);
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev);
+      if (next1 === 1) nextParams.delete('page');
+      else nextParams.set('page', String(next1));
+      return nextParams;
+    });
+  };
+
+  const setPlayingStatusParam = (value) => {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev);
+      if (!value) nextParams.delete('status');
+      else nextParams.set('status', value);
+      nextParams.delete('page');
+      return nextParams;
+    });
+  };
 
   useEffect(() => {
     document.title = 'Feed | Audiophile';
@@ -28,10 +55,13 @@ export default function FeedPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const params = { limit: LIMIT, offset: page * LIMIT };
+        const params = { limit: LIMIT, offset: page0 * LIMIT };
         if (playingStatus) params.playing_status = playingStatus;
         const data = await getEpisodes(params);
-        if (!cancelled) setEpisodes(data);
+        if (!cancelled) {
+          setEpisodes(data.items ?? []);
+          setTotal(data.total ?? 0);
+        }
       } catch (e) {
         if (!cancelled) setError(e.message || 'Failed to load episodes');
       } finally {
@@ -40,7 +70,7 @@ export default function FeedPage() {
     }
     fetchData();
     return () => { cancelled = true; };
-  }, [page, playingStatus]);
+  }, [page0, playingStatus]);
 
   async function handleRefreshFeeds() {
     setRefreshError(null);
@@ -49,10 +79,11 @@ export default function FeedPage() {
     try {
       const report = await refreshFeeds();
       setRefreshReport(report);
-      const params = { limit: LIMIT, offset: page * LIMIT };
+      const params = { limit: LIMIT, offset: page0 * LIMIT };
       if (playingStatus) params.playing_status = playingStatus;
       const data = await getEpisodes(params);
-      setEpisodes(data);
+      setEpisodes(data.items ?? []);
+      setTotal(data.total ?? 0);
     } catch (e) {
       setRefreshError(e.response?.data?.detail || e.message || 'Refresh failed');
     } finally {
@@ -65,39 +96,36 @@ export default function FeedPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Feed</h1>
+        <h1 className="text-2xl font-bold text-foreground">Feed</h1>
         <div className="flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            onClick={handleRefreshFeeds}
-            disabled={refreshing}
-            className="px-3 py-1.5 rounded-md bg-slate-700 dark:bg-slate-600 text-white text-sm hover:bg-slate-600 dark:hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button onClick={handleRefreshFeeds} disabled={refreshing}>
             {refreshing ? 'Refreshing…' : 'Refresh feeds'}
-          </button>
+          </Button>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500 dark:text-slate-400">Status:</span>
-            <StatusFilter value={playingStatus} onChange={setPlayingStatus} />
+            <span className="text-sm text-muted-foreground">Status:</span>
+            <StatusFilter value={playingStatus} onChange={setPlayingStatusParam} />
           </div>
         </div>
       </div>
       {refreshError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
           {refreshError}
         </div>
       )}
       {refreshReport && !refreshError && (
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+        <p className="text-sm text-muted-foreground">
           Feeds refreshed: {refreshReport.podcasts_refreshed ?? 0} podcasts, +{refreshReport.episodes_added ?? 0} new episodes, {refreshReport.episodes_updated ?? 0} updated.
           {refreshReport.errors?.length ? ` ${refreshReport.errors.length} errors.` : ''}
         </p>
       )}
       {loading ? <Loading /> : <EpisodeList episodes={episodes} />}
       <Pagination
-        page={page}
+        page={page0}
         setPage={setPage}
         hasMore={episodes.length === LIMIT}
         loading={loading}
+        total={total}
+        totalPages={total > 0 ? Math.ceil(total / LIMIT) : null}
       />
     </div>
   );

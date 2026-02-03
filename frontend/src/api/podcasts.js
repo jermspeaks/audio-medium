@@ -2,7 +2,7 @@ import api from './api';
 
 export async function getPodcasts(params = {}) {
   const { data } = await api.get('/podcasts', { params });
-  return data;
+  return data?.items != null ? data : { items: Array.isArray(data) ? data : [], total: 0 };
 }
 
 export async function getPodcast(uuid) {

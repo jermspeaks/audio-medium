@@ -24,29 +24,29 @@ export default function StatsDashboard({ summary, topPodcasts }) {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Stats</h1>
+      <h1 className="text-2xl font-bold text-foreground">Stats</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((c) => (
           <div
             key={c.label}
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm"
+            className="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
-            <p className="text-sm text-slate-500 dark:text-slate-400">{c.label}</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            <p className="text-sm text-muted-foreground">{c.label}</p>
+            <p className="mt-1 text-2xl font-semibold text-foreground">
               {c.value}
             </p>
           </div>
         ))}
       </div>
       {chartData.length > 0 && (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Top podcasts by listening hours
           </h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-600" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis
                   dataKey="name"
                   angle={-45}
@@ -69,20 +69,20 @@ export default function StatsDashboard({ summary, topPodcasts }) {
         </div>
       )}
       {topPodcasts?.length > 0 && (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             Top podcasts
           </h2>
           <ul className="space-y-2">
             {topPodcasts.slice(0, 10).map((p) => (
               <li
                 key={p.uuid}
-                className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700 last:border-0"
+                className="flex justify-between items-center py-2 border-b border-border last:border-0"
               >
-                <span className="font-medium text-slate-900 dark:text-slate-100 truncate pr-4">
+                <span className="font-medium text-foreground truncate pr-4">
                   {p.title || p.uuid}
                 </span>
-                <span className="text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">
+                <span className="text-muted-foreground text-sm whitespace-nowrap">
                   {p.total_hours?.toFixed(1) ?? 0} h · {p.episode_count ?? 0} eps
                 </span>
               </li>

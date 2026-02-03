@@ -145,14 +145,14 @@ export default function AudioPlayer({ episode, history, onHistoryUpdated }) {
 
   if (!src) {
     return (
-      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 text-slate-500 dark:text-slate-400 text-sm">
+      <div className="rounded-xl border border-border bg-card p-4 text-muted-foreground text-sm">
         No audio link available for this episode.
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 [&_.rhap_container]:bg-transparent [&_.rhap_container]:shadow-none [&_.rhap_main-controls-button]:text-slate-700 [&_.rhap_main-controls-button]:dark:text-slate-200 [&_.rhap_progress-bar]:bg-slate-200 [&_.rhap_progress-bar]:dark:bg-slate-600 [&_.rhap_progress-filled]:bg-slate-600 [&_.rhap_progress-filled]:dark:bg-slate-400 [&_.rhap_time]:text-slate-600 [&_.rhap_time]:dark:text-slate-300">
+    <div className="rounded-xl border border-border bg-card p-4 [&_.rhap_container]:bg-transparent [&_.rhap_container]:shadow-none [&_.rhap_main-controls-button]:text-foreground [&_.rhap_progress-bar]:bg-muted [&_.rhap_progress-filled]:bg-primary [&_.rhap_time]:text-muted-foreground">
       <AudioPlayerLib
         ref={playerRef}
         src={src}

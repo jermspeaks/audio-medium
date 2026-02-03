@@ -1,23 +1,72 @@
-export default function Pagination({ page, setPage, hasMore, loading }) {
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+export default function Pagination({
+  page,
+  setPage,
+  hasMore,
+  loading,
+  totalPages = null,
+  total = null,
+}) {
+  const currentPage1 = page + 1;
+  const hasPrev = page > 0 && !loading;
+  const hasNext = (totalPages != null ? currentPage1 < totalPages : hasMore) && !loading;
+  const [goToValue, setGoToValue] = useState('');
+
+  const handleGoToSubmit = (e) => {
+    e.preventDefault();
+    const num = parseInt(goToValue, 10);
+    if (!Number.isFinite(num) || num < 1) return;
+    const maxPage = totalPages != null ? totalPages : currentPage1 + 1;
+    const clamped = Math.min(Math.max(1, num), maxPage);
+    setPage(clamped - 1);
+    setGoToValue('');
+  };
+
   return (
-    <div className="flex justify-center gap-4 py-4">
-      <button
+    <div className="flex flex-wrap items-center justify-center gap-4 py-4">
+      <Button
         type="button"
-        disabled={page === 0 || loading}
-        onClick={() => setPage((p) => Math.max(0, p - 1))}
-        className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-300 dark:hover:bg-slate-600"
+        variant="secondary"
+        disabled={!hasPrev}
+        onClick={() => setPage(Math.max(0, page - 1))}
       >
         Previous
-      </button>
-      <span className="py-2">Page {page + 1}</span>
-      <button
+      </Button>
+      <span className="text-sm text-muted-foreground py-2">
+        {totalPages != null ? `Page ${currentPage1} of ${totalPages}` : `Page ${currentPage1}`}
+        {total != null && total > 0 && (
+          <span className="ml-1">({total} total)</span>
+        )}
+      </span>
+      <Button
         type="button"
-        disabled={!hasMore || loading}
-        onClick={() => setPage((p) => p + 1)}
-        className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-300 dark:hover:bg-slate-600"
+        variant="secondary"
+        disabled={!hasNext}
+        onClick={() => setPage(page + 1)}
       >
         Next
-      </button>
+      </Button>
+      <form onSubmit={handleGoToSubmit} className="flex items-center gap-2">
+        <label htmlFor="pagination-goto" className="text-sm text-muted-foreground sr-only">
+          Go to page
+        </label>
+        <Input
+          id="pagination-goto"
+          type="number"
+          min={1}
+          max={totalPages ?? undefined}
+          placeholder="Page"
+          value={goToValue}
+          onChange={(e) => setGoToValue(e.target.value)}
+          className="w-20 h-8 text-sm"
+        />
+        <Button type="submit" variant="outline" size="sm">
+          Go
+        </Button>
+      </form>
     </div>
   );
 }

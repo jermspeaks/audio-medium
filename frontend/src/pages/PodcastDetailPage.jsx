@@ -62,7 +62,7 @@ export default function PodcastDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-4">
-        <span className="text-sm text-slate-500 dark:text-slate-400">Filter by status:</span>
+        <span className="text-sm text-muted-foreground">Filter by status:</span>
         <StatusFilter value={playingStatus} onChange={setPlayingStatus} />
       </div>
       {loading ? (
