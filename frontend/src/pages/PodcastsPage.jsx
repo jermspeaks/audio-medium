@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { List, LayoutGrid, Square } from 'lucide-react';
 import { getPodcasts } from '../api/podcasts';
 import PodcastList from '../components/Podcasts/PodcastList';
 import Loading from '../components/Common/Loading';
@@ -10,6 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 const LIMIT = 24;
+const VIEW_OPTIONS = [
+  { value: 'table', label: 'Table', icon: List },
+  { value: 'card-small', label: 'Small cards', icon: LayoutGrid },
+  { value: 'card-large', label: 'Large cards', icon: Square },
+];
 
 export default function PodcastsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,6 +23,7 @@ export default function PodcastsPage() {
   const page0 = page1 - 1;
   const q = searchParams.get('q') ?? '';
   const filter = searchParams.get('filter') ?? '';
+  const view = searchParams.get('view') ?? 'table';
 
   const [podcasts, setPodcasts] = useState([]);
   const [total, setTotal] = useState(0);
@@ -39,6 +46,16 @@ export default function PodcastsPage() {
       const nextParams = new URLSearchParams(prev);
       if (!value) nextParams.delete('filter');
       else nextParams.set('filter', value);
+      nextParams.delete('page');
+      return nextParams;
+    });
+  };
+
+  const setViewParam = (value) => {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev);
+      if (!value || value === 'table') nextParams.delete('view');
+      else nextParams.set('view', value);
       nextParams.delete('page');
       return nextParams;
     });
@@ -109,9 +126,28 @@ export default function PodcastsPage() {
             <span className="text-sm text-muted-foreground">Filter:</span>
             <PodcastFilter value={filter} onChange={setFilterParam} />
           </div>
+          <div className="flex items-center gap-1 rounded-lg border border-border p-0.5" role="group" aria-label="View">
+            {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setViewParam(value)}
+                className={`p-2 rounded-md transition-colors ${
+                  view === value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+                title={label}
+                aria-label={label}
+                aria-pressed={view === value}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      {loading ? <Loading /> : <PodcastList podcasts={podcasts} />}
+      {loading ? <Loading /> : <PodcastList podcasts={podcasts} view={view} />}
       <Pagination
         page={page0}
         setPage={setPage}

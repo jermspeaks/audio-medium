@@ -1,4 +1,4 @@
-import EpisodeCard from './EpisodeCard';
+import EpisodeTable from './EpisodeTable';
 
 export default function EpisodeList({ episodes }) {
   if (!episodes?.length) {
@@ -8,11 +8,5 @@ export default function EpisodeList({ episodes }) {
       </p>
     );
   }
-  return (
-    <div className="space-y-3">
-      {episodes.map((ep) => (
-        <EpisodeCard key={ep.uuid} episode={ep} showPodcast />
-      ))}
-    </div>
-  );
+  return <EpisodeTable episodes={episodes} />;
 }

@@ -1,5 +1,8 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Play } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
+import ProgressRadial from './ProgressRadial';
 
 const STATUS_LABELS = { 1: 'Not played', 2: 'In progress', 3: 'Completed' };
 
@@ -17,10 +20,39 @@ function formatDate(iso) {
 }
 
 export default function EpisodeDetail({ episode, history, sessions, onHistoryUpdated }) {
+  const audioPlayerRef = useRef(null);
   const title = episode?.title || episode?.uuid;
   const statusLabel = episode ? (STATUS_LABELS[episode.playing_status] ?? '—') : '—';
+  const completionPct = episode?.completion_percentage ?? 0;
+  const hasAudio = Boolean(episode?.file_url);
+
+  const handleRadialPlay = () => {
+    const audio = audioPlayerRef.current?.audio?.current;
+    if (audio) audio.play().catch(() => {});
+  };
+
   return (
     <div className="space-y-6">
+      {hasAudio && (
+        <div className="rounded-xl border border-border bg-card p-6 flex items-center gap-6">
+          <button
+            type="button"
+            onClick={handleRadialPlay}
+            className="rounded-full p-0 border-0 bg-transparent cursor-pointer text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label="Play episode"
+          >
+            <ProgressRadial percentage={completionPct} size="w-20 h-20">
+              <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground">
+                <Play className="w-5 h-5 fill-current shrink-0" />
+              </span>
+            </ProgressRadial>
+          </button>
+          <div className="text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Amount played</p>
+            <p>{Number(completionPct).toFixed(0)}% complete</p>
+          </div>
+        </div>
+      )}
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex gap-6">
           {episode?.podcast_image_url ? (
@@ -109,6 +141,7 @@ export default function EpisodeDetail({ episode, history, sessions, onHistoryUpd
 
       {episode?.file_url && (
         <AudioPlayer
+          ref={audioPlayerRef}
           episode={episode}
           history={history}
           onHistoryUpdated={onHistoryUpdated}
