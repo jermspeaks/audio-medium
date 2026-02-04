@@ -577,9 +577,16 @@ def get_episodes_by_podcast(
     limit: int = 100,
     offset: int = 0,
     playing_status: Optional[Union[int, str]] = None,
+    sort: Optional[str] = "newest",
     include_deleted: bool = False,
 ) -> List[Dict[str, Any]]:
-    """List episodes for a podcast, optionally filtered by playing_status (1=not played, 2=in progress, 3=completed, 'played'=2 or 3)."""
+    """List episodes for a podcast, optionally filtered by playing_status (1=not played, 2=in progress, 3=completed, 'played'=2 or 3). sort: newest, oldest, last_played, oldest_played."""
+    order_by = {
+        "newest": "e.published_date DESC NULLS LAST, e.created_at DESC NULLS LAST",
+        "oldest": "e.published_date ASC NULLS LAST, e.created_at ASC NULLS LAST",
+        "last_played": "lh.last_played_at DESC NULLS LAST, e.published_date DESC NULLS LAST",
+        "oldest_played": "lh.last_played_at ASC NULLS LAST, e.published_date DESC NULLS LAST",
+    }.get(sort if sort in ("newest", "oldest", "last_played", "oldest_played") else None, "e.published_date DESC NULLS LAST, e.created_at DESC NULLS LAST")
     with get_connection(db_path) as conn:
         sql = """
             SELECT e.*, p.title AS podcast_title, p.author AS podcast_author, p.image_url AS podcast_image_url,
@@ -599,7 +606,7 @@ def get_episodes_by_podcast(
             else:
                 sql += " AND lh.playing_status = ?"
                 params.append(playing_status)
-        sql += " ORDER BY lh.last_played_at DESC NULLS LAST, e.published_date DESC NULLS LAST LIMIT ? OFFSET ?"
+        sql += f" ORDER BY {order_by} LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         cur = conn.execute(sql, params)
         return [dict(row) for row in cur.fetchall()]

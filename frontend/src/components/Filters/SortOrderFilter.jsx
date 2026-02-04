@@ -13,15 +13,23 @@ export const SORT_ORDER_OPTIONS = [
   { value: 'title', label: 'Title A–Z' },
 ];
 
-export default function SortOrderFilter({ value, onChange }) {
-  const selected = value ?? 'last_played';
+export const PODCAST_EPISODES_SORT_OPTIONS = [
+  { value: 'newest', label: 'Most recent published' },
+  { value: 'oldest', label: 'Oldest published' },
+  { value: 'last_played', label: 'Last played' },
+  { value: 'oldest_played', label: 'Oldest played' },
+];
+
+export default function SortOrderFilter({ value, onChange, options }) {
+  const opts = options ?? SORT_ORDER_OPTIONS;
+  const selected = value ?? opts[0]?.value ?? 'last_played';
   return (
     <Select value={selected} onValueChange={onChange}>
       <SelectTrigger className="w-[180px]">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {SORT_ORDER_OPTIONS.map((opt) => (
+        {opts.map((opt) => (
           <SelectItem key={opt.value} value={opt.value}>
             {opt.label}
           </SelectItem>

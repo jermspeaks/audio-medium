@@ -264,18 +264,23 @@ def unarchive_podcast(uuid: str):
     return PodcastResponse(**dict(updated))
 
 
+PODCAST_EPISODES_SORT = frozenset({"newest", "oldest", "last_played", "oldest_played"})
+
+
 @router.get("/{uuid}/episodes", response_model=list[EpisodeResponse])
 def list_podcast_episodes(
     uuid: str,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     playing_status: Optional[str] = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
+    sort: Optional[str] = Query("newest", description="newest | oldest | last_played | oldest_played"),
 ):
     """Get episodes for a podcast (includes archived podcasts)."""
     podcast = get_podcast_by_uuid(uuid, include_deleted=True)
     if not podcast:
         raise HTTPException(status_code=404, detail="Podcast not found")
+    sort_val = sort if sort in PODCAST_EPISODES_SORT else "newest"
     rows = get_episodes_by_podcast(
-        podcast_uuid=uuid, limit=limit, offset=offset, playing_status=playing_status
+        podcast_uuid=uuid, limit=limit, offset=offset, playing_status=playing_status, sort=sort_val
     )
     return [EpisodeResponse(**dict(row)) for row in rows]

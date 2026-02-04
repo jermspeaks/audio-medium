@@ -5,6 +5,7 @@ import PodcastDetail from '../components/Podcasts/PodcastDetail';
 import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
 import StatusFilter from '../components/Filters/StatusFilter';
+import SortOrderFilter, { PODCAST_EPISODES_SORT_OPTIONS } from '../components/Filters/SortOrderFilter';
 
 export default function PodcastDetailPage() {
   const { uuid } = useParams();
@@ -13,6 +14,7 @@ export default function PodcastDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [playingStatus, setPlayingStatus] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
 
   useEffect(() => {
     if (!uuid) return;
@@ -42,9 +44,9 @@ export default function PodcastDetailPage() {
     async function fetchEpisodes() {
       setLoading(true);
       try {
-        const params = {};
+        const params = { limit: 200, sort: sortOrder };
         if (playingStatus) params.playing_status = playingStatus;
-        const data = await getPodcastEpisodes(uuid, { limit: 200, ...params });
+        const data = await getPodcastEpisodes(uuid, params);
         if (!cancelled) setEpisodes(data);
       } catch (e) {
         if (!cancelled) setError(e.message || 'Failed to load episodes');
@@ -54,7 +56,7 @@ export default function PodcastDetailPage() {
     }
     fetchEpisodes();
     return () => { cancelled = true; };
-  }, [uuid, playingStatus]);
+  }, [uuid, playingStatus, sortOrder]);
 
   if (error) return <ErrorState message={error} />;
   if (!podcast && !error) return <Loading />;
@@ -64,6 +66,12 @@ export default function PodcastDetailPage() {
       <div className="flex flex-wrap items-center gap-4">
         <span className="text-sm text-muted-foreground">Filter by status:</span>
         <StatusFilter value={playingStatus} onChange={setPlayingStatus} />
+        <span className="text-sm text-muted-foreground">Sort:</span>
+        <SortOrderFilter
+          options={PODCAST_EPISODES_SORT_OPTIONS}
+          value={sortOrder}
+          onChange={setSortOrder}
+        />
       </div>
       {loading ? (
         <Loading />
