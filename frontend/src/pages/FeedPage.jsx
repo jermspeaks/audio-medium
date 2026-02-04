@@ -17,7 +17,7 @@ export default function FeedPage() {
   const page1 = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
   const page0 = page1 - 1;
   const playingStatus = searchParams.get('status') ?? '';
-  const sort = searchParams.get('sort') ?? 'last_played';
+  const sort = searchParams.get('sort') ?? 'published';
 
   const [episodes, setEpisodes] = useState([]);
   const [total, setTotal] = useState(0);
@@ -51,7 +51,7 @@ export default function FeedPage() {
   const setSortParam = (value) => {
     setSearchParams((prev) => {
       const nextParams = new URLSearchParams(prev);
-      if (!value || value === 'last_played') nextParams.delete('sort');
+      if (!value || value === 'published') nextParams.delete('sort');
       else nextParams.set('sort', value);
       nextParams.delete('page');
       return nextParams;
