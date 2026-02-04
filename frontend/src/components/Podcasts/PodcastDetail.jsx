@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import EpisodeCard from '../Episodes/EpisodeCard';
-import { archivePodcast } from '../../api/podcasts';
+import { archivePodcast, unarchivePodcast } from '../../api/podcasts';
 
 export default function PodcastDetail({ podcast, episodes }) {
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState(null);
   const navigate = useNavigate();
   const title = podcast?.title || podcast?.uuid;
+  const isArchived = !!podcast?.deleted_at;
 
   async function handleArchive() {
     if (!podcast?.uuid) return;
@@ -19,6 +20,20 @@ export default function PodcastDetail({ podcast, episodes }) {
       navigate('/podcasts', { replace: true });
     } catch (e) {
       setArchiveError(e.response?.data?.detail || e.message || 'Failed to archive');
+    } finally {
+      setArchiving(false);
+    }
+  }
+
+  async function handleUnarchive() {
+    if (!podcast?.uuid) return;
+    setArchiveError(null);
+    setArchiving(true);
+    try {
+      await unarchivePodcast(podcast.uuid);
+      navigate(0);
+    } catch (e) {
+      setArchiveError(e.response?.data?.detail || e.message || 'Failed to unarchive');
     } finally {
       setArchiving(false);
     }
@@ -47,6 +62,11 @@ export default function PodcastDetail({ podcast, episodes }) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+              {isArchived && (
+                <span className="rounded px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
+                  Archived
+                </span>
+              )}
               {podcast?.is_ended && (
                 <span className="rounded px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
                   Ended
@@ -62,20 +82,33 @@ export default function PodcastDetail({ podcast, episodes }) {
             <p className="mt-2 flex flex-wrap gap-4 items-center">
               {podcast?.uuid && (
                 <>
-                  <Link
-                    to={`/podcasts/${podcast.uuid}/edit`}
-                    className="text-sm text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleArchive}
-                    disabled={archiving}
-                    className="text-sm text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50"
-                  >
-                    {archiving ? 'Archiving…' : 'Archive'}
-                  </button>
+                  {!isArchived && (
+                    <Link
+                      to={`/podcasts/${podcast.uuid}/edit`}
+                      className="text-sm text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1"
+                    >
+                      Edit
+                    </Link>
+                  )}
+                  {isArchived ? (
+                    <button
+                      type="button"
+                      onClick={handleUnarchive}
+                      disabled={archiving}
+                      className="text-sm text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50"
+                    >
+                      {archiving ? 'Unarchiving…' : 'Unarchive'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleArchive}
+                      disabled={archiving}
+                      className="text-sm text-amber-600 dark:text-amber-400 hover:underline disabled:opacity-50"
+                    >
+                      {archiving ? 'Archiving…' : 'Archive'}
+                    </button>
+                  )}
                 </>
               )}
               {podcast?.website_url && (

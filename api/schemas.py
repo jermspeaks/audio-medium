@@ -13,6 +13,7 @@ class PodcastResponse(BaseModel):
     feed_url: Optional[str] = None
     website_url: Optional[str] = None
     image_url: Optional[str] = None
+    deleted_at: Optional[str] = None
     is_ended: Optional[bool] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
