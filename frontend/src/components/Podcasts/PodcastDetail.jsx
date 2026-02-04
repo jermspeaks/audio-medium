@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import EpisodeCard from '../Episodes/EpisodeCard';
+import EpisodeTable from '../Episodes/EpisodeTable';
 import { archivePodcast, unarchivePodcast } from '../../api/podcasts';
 
 export default function PodcastDetail({ podcast, episodes }) {
@@ -147,11 +147,7 @@ export default function PodcastDetail({ podcast, episodes }) {
         {!episodes?.length ? (
           <p className="text-muted-foreground">No episodes.</p>
         ) : (
-          <div className="space-y-3">
-            {episodes.map((ep) => (
-              <EpisodeCard key={ep.uuid} episode={ep} showPodcast={false} />
-            ))}
-          </div>
+          <EpisodeTable episodes={episodes} showPodcastColumn={false} />
         )}
       </div>
     </div>
