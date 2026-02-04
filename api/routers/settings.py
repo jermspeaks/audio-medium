@@ -1,9 +1,14 @@
 """Settings API endpoints (e.g. OPML import, duplicate cleanup)."""
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from api.schemas import OPMLImportResponse, RemoveDuplicatesResponse
+from api.schemas import (
+    OPMLImportResponse,
+    RemoveDuplicatesResponse,
+    MergeDuplicateEpisodesResponse,
+)
 from api.services.opml_import import import_opml
 from api.services.duplicate_cleanup import remove_duplicate_podcasts
+from api.services.duplicate_episode_merge import merge_duplicate_episodes
 
 router = APIRouter()
 
@@ -45,4 +50,18 @@ def remove_duplicates():
     return RemoveDuplicatesResponse(
         deleted_count=report.deleted_count,
         deleted_titles=report.deleted_titles,
+    )
+
+
+@router.post("/episodes/merge-duplicates", response_model=MergeDuplicateEpisodesResponse)
+def merge_duplicate_episodes_endpoint():
+    """
+    Merge duplicate episodes: same podcast, same normalized title, same/close published_date.
+    Reassigns listening_history and play_sessions to a canonical episode per group, then removes duplicate episode rows.
+    """
+    report = merge_duplicate_episodes()
+    return MergeDuplicateEpisodesResponse(
+        podcasts_processed=report.podcasts_processed,
+        duplicate_groups=report.duplicate_groups,
+        episodes_removed=report.episodes_removed,
     )

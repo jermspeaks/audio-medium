@@ -28,6 +28,7 @@ from api.schemas import (
 )
 from api.utils.rss_fetcher import fetch_podcast_metadata, fetch_podcast_with_episodes, FeedNotFoundError
 from api.services.feed_refresh import refresh_all_feeds
+from api.services.episode_identity import resolve_episode_uuid
 
 router = APIRouter()
 
@@ -73,9 +74,16 @@ def subscribe_to_podcast(body: PodcastSubscribeRequest):
         is_ended=False,
     )
     with get_connection() as conn:
+        cur = conn.execute(
+            """SELECT uuid, title, published_date, file_url, created_at
+               FROM episodes WHERE podcast_uuid = ? AND deleted_at IS NULL""",
+            (podcast_uuid,),
+        )
+        existing_episodes = [dict(r) for r in cur.fetchall()]
         for ep in data.get("entries") or []:
+            uid = resolve_episode_uuid(podcast_uuid, ep, existing_episodes)
             upsert_episode(
-                uuid=ep["uuid"],
+                uuid=uid,
                 podcast_uuid=podcast_uuid,
                 title=ep.get("title"),
                 description=ep.get("description"),

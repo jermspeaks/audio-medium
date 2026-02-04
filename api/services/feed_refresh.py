@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 from database import get_connection, upsert_episode, upsert_listening_history, update_podcast_is_ended
 from api.utils.rss_fetcher import fetch_podcast_with_episodes, FeedNotFoundError
+from api.services.episode_identity import resolve_episode_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +50,19 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
         local_updated = 0
         with get_connection() as conn:
             cur = conn.execute(
-                "SELECT uuid FROM episodes WHERE podcast_uuid = ? AND deleted_at IS NULL",
+                """SELECT uuid, title, published_date, file_url, created_at
+                   FROM episodes WHERE podcast_uuid = ? AND deleted_at IS NULL""",
                 (podcast_uuid,),
             )
-            existing_uuids = {r["uuid"] for r in cur.fetchall()}
+            existing_episodes = [dict(r) for r in cur.fetchall()]
+            existing_uuids = {r["uuid"] for r in existing_episodes}
             for ep in entries:
-                uid = ep["uuid"]
-                if uid not in existing_uuids:
+                uid = resolve_episode_uuid(podcast_uuid, ep, existing_episodes)
+                is_new = uid not in existing_uuids
+                if is_new:
                     episodes_added += 1
                     local_added += 1
+                    existing_uuids.add(uid)
                 else:
                     episodes_updated += 1
                     local_updated += 1
@@ -75,7 +80,7 @@ def refresh_all_feeds() -> Tuple[int, int, int, List[str]]:
                     deleted_at=None,
                     conn=conn,
                 )
-                if uid not in existing_uuids:
+                if is_new:
                     upsert_listening_history(
                         uid,
                         played_up_to=0,

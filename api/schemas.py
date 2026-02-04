@@ -172,6 +172,13 @@ class RemoveDuplicatesResponse(BaseModel):
     deleted_titles: List[str] = []
 
 
+class MergeDuplicateEpisodesResponse(BaseModel):
+    """Response after merging duplicate episodes."""
+    podcasts_processed: int = 0
+    duplicate_groups: int = 0
+    episodes_removed: int = 0
+
+
 class PodcastSubscribeRequest(BaseModel):
     """Request body for subscribing to a podcast feed."""
     feed_url: str
