@@ -696,9 +696,16 @@ def get_episodes_list(
     offset: int = 0,
     podcast_uuid: Optional[str] = None,
     playing_status: Optional[Union[int, str]] = None,
+    sort: Optional[str] = "last_played",
     include_deleted: bool = False,
 ) -> List[Dict[str, Any]]:
-    """List episodes with optional filters for API list endpoint. playing_status: 1=not played, 2=in progress, 3=completed, 'played'=2 or 3."""
+    """List episodes with optional filters for API list endpoint. playing_status: 1=not played, 2=in progress, 3=completed, 'played'=2 or 3. sort: last_played, published, created, title."""
+    order_by = {
+        "last_played": "lh.last_played_at DESC NULLS LAST, e.published_date DESC NULLS LAST",
+        "published": "e.published_date DESC NULLS LAST, e.created_at DESC NULLS LAST",
+        "created": "e.created_at DESC NULLS LAST",
+        "title": "e.title ASC NULLS LAST, e.published_date DESC NULLS LAST",
+    }.get(sort, "lh.last_played_at DESC NULLS LAST, e.published_date DESC NULLS LAST")
     with get_connection(db_path) as conn:
         sql = """
             SELECT e.*, p.title AS podcast_title, p.author AS podcast_author, p.image_url AS podcast_image_url,
@@ -721,7 +728,7 @@ def get_episodes_list(
             else:
                 sql += " AND lh.playing_status = ?"
                 params.append(playing_status)
-        sql += " ORDER BY lh.last_played_at DESC NULLS LAST LIMIT ? OFFSET ?"
+        sql += f" ORDER BY {order_by} LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         cur = conn.execute(sql, params)
         return [dict(row) for row in cur.fetchall()]

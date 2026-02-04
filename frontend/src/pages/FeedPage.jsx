@@ -7,6 +7,7 @@ import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
 import Pagination from '../components/Common/Pagination';
 import StatusFilter from '../components/Filters/StatusFilter';
+import SortOrderFilter from '../components/Filters/SortOrderFilter';
 import { Button } from '@/components/ui/button';
 
 const LIMIT = 50;
@@ -16,6 +17,7 @@ export default function FeedPage() {
   const page1 = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
   const page0 = page1 - 1;
   const playingStatus = searchParams.get('status') ?? '';
+  const sort = searchParams.get('sort') ?? 'last_played';
 
   const [episodes, setEpisodes] = useState([]);
   const [total, setTotal] = useState(0);
@@ -46,6 +48,16 @@ export default function FeedPage() {
     });
   };
 
+  const setSortParam = (value) => {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev);
+      if (!value || value === 'last_played') nextParams.delete('sort');
+      else nextParams.set('sort', value);
+      nextParams.delete('page');
+      return nextParams;
+    });
+  };
+
   useEffect(() => {
     document.title = 'Feed | Audiophile';
   }, []);
@@ -55,7 +67,7 @@ export default function FeedPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const params = { limit: LIMIT, offset: page0 * LIMIT };
+        const params = { limit: LIMIT, offset: page0 * LIMIT, sort };
         if (playingStatus) params.playing_status = playingStatus;
         const data = await getEpisodes(params);
         if (!cancelled) {
@@ -70,7 +82,7 @@ export default function FeedPage() {
     }
     fetchData();
     return () => { cancelled = true; };
-  }, [page0, playingStatus]);
+  }, [page0, playingStatus, sort]);
 
   async function handleRefreshFeeds() {
     setRefreshError(null);
@@ -79,7 +91,7 @@ export default function FeedPage() {
     try {
       const report = await refreshFeeds();
       setRefreshReport(report);
-      const params = { limit: LIMIT, offset: page0 * LIMIT };
+      const params = { limit: LIMIT, offset: page0 * LIMIT, sort };
       if (playingStatus) params.playing_status = playingStatus;
       const data = await getEpisodes(params);
       setEpisodes(data.items ?? []);
@@ -104,6 +116,10 @@ export default function FeedPage() {
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Status:</span>
             <StatusFilter value={playingStatus} onChange={setPlayingStatusParam} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Sort order:</span>
+            <SortOrderFilter value={sort} onChange={setSortParam} />
           </div>
         </div>
       </div>

@@ -15,6 +15,8 @@ from api.schemas import EpisodeResponse, ListeningHistoryResponse, ListeningHist
 
 router = APIRouter()
 
+VALID_SORT = frozenset({"last_played", "published", "created", "title"})
+
 
 @router.get("")
 def list_episodes(
@@ -22,10 +24,12 @@ def list_episodes(
     offset: int = Query(0, ge=0),
     podcast_uuid: Optional[str] = Query(None),
     playing_status: Optional[str] = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
+    sort: Optional[str] = Query("last_played", description="Sort: last_played, published, created, title"),
 ):
     """List episodes with optional filters. Returns { items, total }."""
+    sort_val = sort if sort in VALID_SORT else "last_played"
     rows = get_episodes_list(
-        limit=limit, offset=offset, podcast_uuid=podcast_uuid, playing_status=playing_status
+        limit=limit, offset=offset, podcast_uuid=podcast_uuid, playing_status=playing_status, sort=sort_val
     )
     total = get_episodes_list_count(
         podcast_uuid=podcast_uuid, playing_status=playing_status
