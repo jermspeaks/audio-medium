@@ -5,6 +5,7 @@ import PodcastList from '../components/Podcasts/PodcastList';
 import Loading from '../components/Common/Loading';
 import ErrorState from '../components/Common/ErrorState';
 import Pagination from '../components/Common/Pagination';
+import PodcastFilter from '../components/Filters/PodcastFilter';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -15,6 +16,7 @@ export default function PodcastsPage() {
   const page1 = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
   const page0 = page1 - 1;
   const q = searchParams.get('q') ?? '';
+  const filter = searchParams.get('filter') ?? '';
 
   const [podcasts, setPodcasts] = useState([]);
   const [total, setTotal] = useState(0);
@@ -32,6 +34,16 @@ export default function PodcastsPage() {
     });
   };
 
+  const setFilterParam = (value) => {
+    setSearchParams((prev) => {
+      const nextParams = new URLSearchParams(prev);
+      if (!value) nextParams.delete('filter');
+      else nextParams.set('filter', value);
+      nextParams.delete('page');
+      return nextParams;
+    });
+  };
+
   useEffect(() => {
     document.title = 'Podcasts | Audiophile';
   }, []);
@@ -41,11 +53,15 @@ export default function PodcastsPage() {
     async function fetchData() {
       setLoading(true);
       try {
-        const data = await getPodcasts({
+        const params = {
           search: q || undefined,
           limit: LIMIT,
           offset: page0 * LIMIT,
-        });
+        };
+        if (filter) {
+          params.filter = filter;
+        }
+        const data = await getPodcasts(params);
         if (!cancelled) {
           setPodcasts(data.items ?? []);
           setTotal(data.total ?? 0);
@@ -58,7 +74,7 @@ export default function PodcastsPage() {
     }
     fetchData();
     return () => { cancelled = true; };
-  }, [page0, q]);
+  }, [page0, q, filter]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -78,16 +94,22 @@ export default function PodcastsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-foreground">Podcasts</h1>
-        <form onSubmit={handleSearchSubmit} className="flex gap-2" key={q}>
-          <Input
-            name="query"
-            type="search"
-            defaultValue={q}
-            placeholder="Search by title or author"
-            className="w-64"
-          />
-          <Button type="submit">Search</Button>
-        </form>
+        <div className="flex flex-wrap items-center gap-4">
+          <form onSubmit={handleSearchSubmit} className="flex gap-2" key={q}>
+            <Input
+              name="query"
+              type="search"
+              defaultValue={q}
+              placeholder="Search by title or author"
+              className="w-64"
+            />
+            <Button type="submit">Search</Button>
+          </form>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Filter:</span>
+            <PodcastFilter value={filter} onChange={setFilterParam} />
+          </div>
+        </div>
       </div>
       {loading ? <Loading /> : <PodcastList podcasts={podcasts} />}
       <Pagination

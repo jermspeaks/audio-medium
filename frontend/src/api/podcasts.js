@@ -1,7 +1,12 @@
 import api from './api';
 
 export async function getPodcasts(params = {}) {
-  const { data } = await api.get('/podcasts', { params });
+  // Only include filter if it has a value
+  const apiParams = { ...params };
+  if (!apiParams.filter || apiParams.filter === '') {
+    delete apiParams.filter;
+  }
+  const { data } = await api.get('/podcasts', { params: apiParams });
   return data?.items != null ? data : { items: Array.isArray(data) ? data : [], total: 0 };
 }
 

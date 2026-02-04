@@ -463,8 +463,12 @@ def get_all_podcasts(
     limit: int = 100,
     offset: int = 0,
     include_deleted: bool = False,
+    filter: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """List all podcasts with optional search (title/author) and pagination."""
+    """List all podcasts with optional search (title/author), pagination, and status filter.
+    
+    filter: "active" (not archived and not ended), "archived" (archived), "ended" (ended but not archived), or None (all)
+    """
     with get_connection(db_path) as conn:
         sql = """
             SELECT p.*, (SELECT COUNT(*) FROM episodes e WHERE e.podcast_uuid = p.uuid AND (e.deleted_at IS NULL OR ? = 1)) AS episode_count
@@ -472,8 +476,18 @@ def get_all_podcasts(
             WHERE 1=1
         """
         params: list = [1 if include_deleted else 0]
-        if not include_deleted:
+        
+        # Apply filter parameter
+        if filter == "active":
+            sql += " AND p.deleted_at IS NULL AND (p.is_ended IS NULL OR p.is_ended = 0)"
+        elif filter == "archived":
+            sql += " AND p.deleted_at IS NOT NULL"
+        elif filter == "ended":
+            sql += " AND p.is_ended = 1 AND p.deleted_at IS NULL"
+        elif (filter is None or filter == "") and not include_deleted:
+            # Default behavior: exclude archived when no filter specified
             sql += " AND p.deleted_at IS NULL"
+        
         if search:
             sql += " AND (p.title LIKE ? OR p.author LIKE ?)"
             term = f"%{search}%"
@@ -488,13 +502,27 @@ def get_all_podcasts_count(
     db_path: Optional[Path] = None,
     search: Optional[str] = None,
     include_deleted: bool = False,
+    filter: Optional[str] = None,
 ) -> int:
-    """Count podcasts with same filters as get_all_podcasts (no limit/offset)."""
+    """Count podcasts with same filters as get_all_podcasts (no limit/offset).
+    
+    filter: "active" (not archived and not ended), "archived" (archived), "ended" (ended but not archived), or None (all)
+    """
     with get_connection(db_path) as conn:
         sql = "SELECT COUNT(*) AS n FROM podcasts p WHERE 1=1"
         params: list = []
-        if not include_deleted:
+        
+        # Apply filter parameter
+        if filter == "active":
+            sql += " AND p.deleted_at IS NULL AND (p.is_ended IS NULL OR p.is_ended = 0)"
+        elif filter == "archived":
+            sql += " AND p.deleted_at IS NOT NULL"
+        elif filter == "ended":
+            sql += " AND p.is_ended = 1 AND p.deleted_at IS NULL"
+        elif (filter is None or filter == "") and not include_deleted:
+            # Default behavior: exclude archived when no filter specified
             sql += " AND p.deleted_at IS NULL"
+        
         if search:
             sql += " AND (p.title LIKE ? OR p.author LIKE ?)"
             term = f"%{search}%"

@@ -160,18 +160,24 @@ def list_podcasts(
     search: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    filter: Optional[str] = Query(None, description="Filter: active, archived, ended"),
 ):
-    """List all podcasts with optional search and pagination. Returns { items, total }."""
-    rows = get_all_podcasts(search=search, limit=limit, offset=offset)
-    total = get_all_podcasts_count(search=search)
+    """List all podcasts with optional search, pagination, and status filter. Returns { items, total }."""
+    # Validate filter value
+    valid_filters = {"active", "archived", "ended"}
+    if filter is not None and filter not in valid_filters:
+        raise HTTPException(status_code=400, detail=f"Invalid filter value. Must be one of: {', '.join(valid_filters)}")
+    
+    rows = get_all_podcasts(search=search, limit=limit, offset=offset, filter=filter)
+    total = get_all_podcasts_count(search=search, filter=filter)
     items = [PodcastResponse(**dict(row)) for row in rows]
     return {"items": items, "total": total}
 
 
 @router.get("/{uuid}", response_model=PodcastResponse)
 def get_podcast(uuid: str):
-    """Get podcast details by uuid."""
-    row = get_podcast_by_uuid(uuid)
+    """Get podcast details by uuid (includes archived podcasts)."""
+    row = get_podcast_by_uuid(uuid, include_deleted=True)
     if not row:
         raise HTTPException(status_code=404, detail="Podcast not found")
     return PodcastResponse(**dict(row))
@@ -257,8 +263,8 @@ def list_podcast_episodes(
     offset: int = Query(0, ge=0),
     playing_status: Optional[str] = Query(None, description="1=not played, 2=in progress, 3=completed, played=both 2 and 3"),
 ):
-    """Get episodes for a podcast."""
-    podcast = get_podcast_by_uuid(uuid)
+    """Get episodes for a podcast (includes archived podcasts)."""
+    podcast = get_podcast_by_uuid(uuid, include_deleted=True)
     if not podcast:
         raise HTTPException(status_code=404, detail="Podcast not found")
     rows = get_episodes_by_podcast(
