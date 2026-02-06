@@ -36,6 +36,29 @@ body {
   .rhap_volume-indicator:hover { opacity: 1 !important; }
 }
 
+.rhap_playback-speed {
+  display: inline-flex;
+  align-items: center;
+}
+.rhap_playback-speed-select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0 4px;
+  margin: 0;
+  border-radius: 4px;
+  appearance: auto;
+  min-width: 3rem;
+}
+.rhap_playback-speed-select:hover {
+  opacity: 0.9;
+}
+.rhap_playback-speed-select:focus {
+  outline: none;
+}
+
 .dark .rhap_container {
   background-color: transparent !important;
   box-shadow: none !important;
@@ -60,6 +83,8 @@ body {
 .dark .rhap_volume-indicator,
 .dark .rhap_volume-filled { background-color: rgb(148 163 184) !important; }
 .dark .rhap_volume-indicator:hover { opacity: 1 !important; }
+.dark .rhap_playback-speed-select { color: rgb(226 232 240) !important; }
+.dark .rhap_playback-speed-select:hover { color: rgb(248 250 252) !important; }
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

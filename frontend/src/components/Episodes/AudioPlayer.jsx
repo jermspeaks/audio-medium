@@ -1,7 +1,46 @@
-import { forwardRef, useRef, useCallback, useEffect } from 'react';
-import AudioPlayerLib from 'react-h5-audio-player';
+import { forwardRef, useRef, useCallback, useEffect, useState } from 'react';
+import AudioPlayerLib, { RHAP_UI } from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 import { updateEpisodeHistory } from '../../api/episodes';
+
+const PLAYBACK_SPEEDS = [1, 1.15, 1.25, 1.5, 1.75, 2, 2.5, 3];
+
+function PlaybackSpeedControl({ getAudio }) {
+  const [rate, setRate] = useState(1);
+
+  useEffect(() => {
+    const audio = getAudio?.();
+    if (audio) {
+      audio.playbackRate = rate;
+    }
+  }, [getAudio, rate]);
+
+  const handleChange = (e) => {
+    const value = Number(e.target.value);
+    setRate(value);
+    const audio = getAudio?.();
+    if (audio) {
+      audio.playbackRate = value;
+    }
+  };
+
+  return (
+    <span className="rhap_playback-speed">
+      <select
+        aria-label="Playback speed"
+        value={rate}
+        onChange={handleChange}
+        className="rhap_playback-speed-select"
+      >
+        {PLAYBACK_SPEEDS.map((s) => (
+          <option key={s} value={s}>
+            {s}x
+          </option>
+        ))}
+      </select>
+    </span>
+  );
+}
 
 const SYNC_INTERVAL_MS = 5000;
 const COMPLETION_THRESHOLD = 0.95; // 95% = completed
@@ -174,6 +213,11 @@ const AudioPlayer = forwardRef(function AudioPlayer({ episode, history, onHistor
         listenInterval={1000}
         showSkipControls={false}
         autoPlayAfterSrcChange={false}
+        progressJumpSteps={{ backward: 30000, forward: 30000 }}
+        customAdditionalControls={[
+          RHAP_UI.LOOP,
+          <PlaybackSpeedControl getAudio={() => playerRef.current?.audio?.current} key="speed" />,
+        ]}
       />
     </div>
   );
