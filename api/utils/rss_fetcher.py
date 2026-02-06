@@ -158,6 +158,18 @@ def _get_published_date(entry: Any) -> Optional[float]:
     return None
 
 
+def _parse_length(value: Any) -> Optional[int]:
+    """Parse enclosure length to int; return None for None, empty string, or invalid."""
+    if value is None:
+        return None
+    if isinstance(value, str) and not value.strip():
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
 def _get_enclosure_audio(entry: Any) -> tuple[Optional[str], Optional[str], Optional[int]]:
     """Get primary audio enclosure: (href, type, length). Prefer audio type."""
     enclosures = entry.get("enclosures") if hasattr(entry, "get") else []
@@ -178,7 +190,7 @@ def _get_enclosure_audio(entry: Any) -> tuple[Optional[str], Optional[str], Opti
             if "audio" in mt or not mt:
                 href = h.strip()
                 typ = t.strip() if t and isinstance(t, str) else None
-                length = int(l) if l is not None else None
+                length = _parse_length(l)
                 break
     if not href and enclosures:
         enc = enclosures[0]
@@ -186,9 +198,10 @@ def _get_enclosure_audio(entry: Any) -> tuple[Optional[str], Optional[str], Opti
         if h and isinstance(h, str) and h.strip().startswith("http"):
             href = h.strip()
             t = enc.get("type") if isinstance(enc, dict) else getattr(enc, "type", None)
-            length = enc.get("length") if isinstance(enc, dict) else getattr(enc, "length", None)
+            length = _parse_length(
+                enc.get("length") if isinstance(enc, dict) else getattr(enc, "length", None)
+            )
             typ = t.strip() if t and isinstance(t, str) else None
-            length = int(length) if length is not None else None
     return href, typ, length
 
 
