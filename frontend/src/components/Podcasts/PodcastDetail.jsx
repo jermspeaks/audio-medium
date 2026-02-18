@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import EpisodeTable from '../Episodes/EpisodeTable';
 import { archivePodcast, unarchivePodcast } from '../../api/podcasts';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
 
 export default function PodcastDetail({ podcast, episodes }) {
   const [archiving, setArchiving] = useState(false);
@@ -135,9 +136,13 @@ export default function PodcastDetail({ podcast, episodes }) {
               )}
             </p>
             {podcast?.description && (
-              <p className="mt-3 text-muted-foreground text-sm line-clamp-3">
-                {podcast.description}
-              </p>
+              <div
+                className="mt-3 text-muted-foreground text-sm line-clamp-5"
+                data-description
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(podcast.description),
+                }}
+              />
             )}
           </div>
         </div>

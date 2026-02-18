@@ -199,7 +199,7 @@ const AudioPlayer = forwardRef(function AudioPlayer({ episode, history, onHistor
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 [&_.rhap_container]:bg-transparent [&_.rhap_container]:shadow-none [&_.rhap_main-controls-button]:text-foreground [&_.rhap_progress-bar]:bg-muted [&_.rhap_progress-filled]:bg-primary [&_.rhap_time]:text-muted-foreground">
+    <div className="[&_.rhap_container]:bg-transparent [&_.rhap_container]:shadow-none [&_.rhap_main-controls-button]:text-foreground [&_.rhap_progress-bar]:bg-muted [&_.rhap_progress-filled]:bg-primary [&_.rhap_time]:text-muted-foreground">
       <AudioPlayerLib
         ref={setRef}
         src={src}
